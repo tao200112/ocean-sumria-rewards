@@ -104,7 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else if (ensureData?.created) {
                 console.log('[Auth] New profile created via rpc_ensure_profile');
             } else if (ensureData?.error) {
-                console.error('[Auth] rpc_ensure_profile returned error:', ensureData.error);
+                // 显示完整错误信息用于调试
+                console.error('[Auth] rpc_ensure_profile returned error:', ensureData.error, 'Details:', JSON.stringify(ensureData));
             } else {
                 console.log('[Auth] Profile already exists');
             }
