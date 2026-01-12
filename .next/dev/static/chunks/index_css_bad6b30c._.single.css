@@ -1,0 +1,15 @@
+/* [project]/index.css [app-client] (css) */
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/*# sourceMappingURL=index_css_bad6b30c._.single.css.map*/

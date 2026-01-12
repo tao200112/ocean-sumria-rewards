@@ -1,0 +1,7 @@
+{
+  "name": "Ocean Sumria Rewards",
+  "description": "A comprehensive restaurant gamification system featuring a customer mobile app, staff operations portal, and admin management console.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
