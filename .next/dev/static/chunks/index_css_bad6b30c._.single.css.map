@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/index.css"],"sourcesContent":["/* Custom styles from index.html */\r\nbody {\r\n  -webkit-tap-highlight-color: transparent;\r\n}\r\n/* Hide scrollbar for Chrome, Safari and Opera */\r\n.no-scrollbar::-webkit-scrollbar {\r\n  display: none;\r\n}\r\n/* Hide scrollbar for IE, Edge and Firefox */\r\n.no-scrollbar {\r\n  -ms-overflow-style: none;  /* IE and Edge */\r\n  scrollbar-width: none;  /* Firefox */\r\n}\r\n"],"names":[],"mappings":"AACA;;;;AAIA;;;;AAIA"}}]
-}

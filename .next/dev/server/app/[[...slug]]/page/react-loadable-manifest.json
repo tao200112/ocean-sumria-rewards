@@ -1,9 +1,0 @@
-{
-  "[project]/App.tsx [app-client] (ecmascript, next/dynamic entry)": {
-    "id": "[project]/App.tsx [app-client] (ecmascript, next/dynamic entry)",
-    "files": [
-      "static/chunks/_79d6836f._.js",
-      "static/chunks/App_tsx_06be7b18._.js"
-    ]
-  }
-}
