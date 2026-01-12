@@ -18,6 +18,7 @@ DROP FUNCTION IF EXISTS public.generate_public_id() CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.update_updated_at() CASCADE;
 DROP FUNCTION IF EXISTS public.rpc_get_my_profile() CASCADE;
+DROP FUNCTION IF EXISTS public.rpc_ensure_profile() CASCADE;
 DROP FUNCTION IF EXISTS public.rpc_staff_find_user_by_public_id(text) CASCADE;
 DROP FUNCTION IF EXISTS public.rpc_staff_add_points(text, int, text) CASCADE;
 DROP FUNCTION IF EXISTS public.rpc_staff_add_spins(text, int, text) CASCADE;
@@ -181,6 +182,30 @@ CREATE POLICY "Staff view all coupons" ON public.coupons FOR SELECT TO authentic
 -- ============================================================
 -- STEP 6: RPCs (Abbreviated - full versions in 07_rpc_functions.sql)
 -- ============================================================
+
+-- rpc_ensure_profile (creates profile if missing - handles OAuth edge case)
+CREATE OR REPLACE FUNCTION public.rpc_ensure_profile() RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE uid UUID; user_email TEXT; user_name TEXT; new_public_id TEXT; profile_exists BOOLEAN; result JSONB;
+BEGIN
+    uid := auth.uid();
+    IF uid IS NULL THEN RETURN jsonb_build_object('error', 'NOT_AUTHENTICATED'); END IF;
+    SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = uid) INTO profile_exists;
+    IF profile_exists THEN
+        SELECT jsonb_build_object('created', FALSE, 'id', p.id, 'public_id', p.public_id, 'name', p.name, 'email', p.email, 'role', p.role, 'points', p.points, 'spins', p.spins) INTO result FROM public.profiles p WHERE p.id = uid;
+        RETURN result;
+    END IF;
+    SELECT email, COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', SPLIT_PART(email, '@', 1)) INTO user_email, user_name FROM auth.users WHERE id = uid;
+    IF user_email IS NULL THEN RETURN jsonb_build_object('error', 'USER_NOT_FOUND'); END IF;
+    new_public_id := public.generate_public_id();
+    INSERT INTO public.profiles (id, email, name, role, public_id, points, spins) VALUES (uid, user_email, user_name, 'customer', new_public_id, 0, 0);
+    SELECT jsonb_build_object('created', TRUE, 'id', p.id, 'public_id', p.public_id, 'name', p.name, 'email', p.email, 'role', p.role, 'points', p.points, 'spins', p.spins) INTO result FROM public.profiles p WHERE p.id = uid;
+    RETURN result;
+EXCEPTION WHEN unique_violation THEN
+    SELECT jsonb_build_object('created', FALSE, 'id', p.id, 'public_id', p.public_id, 'name', p.name, 'email', p.email, 'role', p.role, 'points', p.points, 'spins', p.spins) INTO result FROM public.profiles p WHERE p.id = uid;
+    RETURN result;
+WHEN OTHERS THEN RETURN jsonb_build_object('error', 'CREATE_FAILED', 'message', SQLERRM);
+END;
+$$;
 
 -- rpc_get_my_profile
 CREATE OR REPLACE FUNCTION public.rpc_get_my_profile() RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

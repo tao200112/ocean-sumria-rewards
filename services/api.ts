@@ -74,23 +74,30 @@ export const api = {
   },
 
   /**
-   * ensureProfile: READ ONLY.
-   * We DO NOT create profiles on client anymore.
-   * If usage calls this, we just fetch.
+   * ensureProfile: Creates profile if it doesn't exist.
+   * Calls rpc_ensure_profile which handles profile creation for OAuth users.
    */
-  ensureProfile: async (user: any) => {
-    // Just an alias for direct fetch now, wait for trigger
-    let attempts = 0;
-    while (attempts < 5) {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      if (data) return data;
-      if (error) console.warn('Profile fetch error:', error);
+  ensureProfile: async (user: any): Promise<any> => {
+    try {
+      console.log('[API] Ensuring profile exists via RPC...');
+      const { data, error } = await supabase.rpc('rpc_ensure_profile');
 
-      // Wait 1s for trigger
-      await new Promise(r => setTimeout(r, 1000));
-      attempts++;
+      if (error) {
+        console.error('[API] ensureProfile RPC error:', error);
+        return null;
+      }
+
+      if (data?.error) {
+        console.error('[API] ensureProfile returned error:', data.error, data.message);
+        return null;
+      }
+
+      console.log('[API] ensureProfile result:', data?.created ? 'Created new profile' : 'Profile exists');
+      return data;
+    } catch (e) {
+      console.error('[API] ensureProfile exception:', e);
+      return null;
     }
-    return null;
   },
 
   // --- RPC Wrappers ---

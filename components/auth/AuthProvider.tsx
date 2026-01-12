@@ -92,10 +92,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('[Auth] Profile load timeout - unlocking UI');
             setLoading(false);
             actions.setLoading(false);
-        }, 8000);
+        }, 10000);
 
         try {
-            // Try RPC first
+            // Step 1: Ensure profile exists (creates if missing - handles OAuth edge case)
+            console.log('[Auth] Calling rpc_ensure_profile to create profile if needed...');
+            const { data: ensureData, error: ensureError } = await supabase.rpc('rpc_ensure_profile');
+
+            if (ensureError) {
+                console.error('[Auth] rpc_ensure_profile error:', ensureError.message);
+            } else if (ensureData?.created) {
+                console.log('[Auth] New profile created via rpc_ensure_profile');
+            } else if (ensureData?.error) {
+                console.error('[Auth] rpc_ensure_profile returned error:', ensureData.error);
+            } else {
+                console.log('[Auth] Profile already exists');
+            }
+
+            // Step 2: Fetch the profile
             console.log('[Auth] Calling rpc_get_my_profile...');
             const { data: rpcData, error: rpcError } = await supabase.rpc('rpc_get_my_profile');
 
@@ -129,8 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.log('[Auth] Profile loaded via direct query:', profile.publicId);
                     actions.setUser(profile);
                 } else {
-                    console.error('[Auth] No profile found!');
-                    alert('Profile not found. Please contact support.');
+                    console.error('[Auth] No profile found after ensure!');
+                    alert('Unable to create profile. Please try again or contact support.');
                     await supabase.auth.signOut();
                     actions.setUser(null);
                 }
@@ -156,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (e) {
             console.error('[Auth] loadProfile exception:', e);
+            clearTimeout(timeout);
             actions.setUser(null);
         } finally {
             setLoading(false);

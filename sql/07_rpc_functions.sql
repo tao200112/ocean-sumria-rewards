@@ -4,6 +4,111 @@
 -- ============================================================
 
 -- ============================================================
+-- 0) rpc_ensure_profile()
+-- Creates a profile for the current user if one doesn't exist.
+-- This is a fallback for when the auth.users trigger fails (e.g., OAuth).
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.rpc_ensure_profile()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    user_id UUID;
+    user_email TEXT;
+    user_name TEXT;
+    new_public_id TEXT;
+    profile_exists BOOLEAN;
+    result JSONB;
+BEGIN
+    user_id := auth.uid();
+    
+    IF user_id IS NULL THEN
+        RETURN jsonb_build_object('error', 'NOT_AUTHENTICATED', 'message', 'User not authenticated');
+    END IF;
+    
+    -- Check if profile already exists
+    SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = user_id) INTO profile_exists;
+    
+    IF profile_exists THEN
+        -- Profile exists, return it
+        SELECT jsonb_build_object(
+            'created', FALSE,
+            'id', p.id,
+            'public_id', p.public_id,
+            'name', p.name,
+            'email', p.email,
+            'role', p.role,
+            'points', p.points,
+            'spins', p.spins,
+            'created_at', p.created_at
+        ) INTO result
+        FROM public.profiles p
+        WHERE p.id = user_id;
+        
+        RETURN result;
+    END IF;
+    
+    -- Profile doesn't exist, get user info from auth.users
+    SELECT email, 
+           COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', SPLIT_PART(email, '@', 1))
+    INTO user_email, user_name
+    FROM auth.users
+    WHERE id = user_id;
+    
+    IF user_email IS NULL THEN
+        RETURN jsonb_build_object('error', 'USER_NOT_FOUND', 'message', 'Auth user not found');
+    END IF;
+    
+    -- Generate unique public_id
+    new_public_id := public.generate_public_id();
+    
+    -- Create profile
+    INSERT INTO public.profiles (id, email, name, role, public_id, points, spins)
+    VALUES (user_id, user_email, user_name, 'customer', new_public_id, 0, 0);
+    
+    -- Return the newly created profile
+    SELECT jsonb_build_object(
+        'created', TRUE,
+        'id', p.id,
+        'public_id', p.public_id,
+        'name', p.name,
+        'email', p.email,
+        'role', p.role,
+        'points', p.points,
+        'spins', p.spins,
+        'created_at', p.created_at
+    ) INTO result
+    FROM public.profiles p
+    WHERE p.id = user_id;
+    
+    RETURN result;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Race condition: profile was created by another request
+        SELECT jsonb_build_object(
+            'created', FALSE,
+            'id', p.id,
+            'public_id', p.public_id,
+            'name', p.name,
+            'email', p.email,
+            'role', p.role,
+            'points', p.points,
+            'spins', p.spins,
+            'created_at', p.created_at
+        ) INTO result
+        FROM public.profiles p
+        WHERE p.id = user_id;
+        
+        RETURN result;
+    WHEN OTHERS THEN
+        RETURN jsonb_build_object('error', 'CREATE_FAILED', 'message', SQLERRM);
+END;
+$$;
+
+-- ============================================================
 -- 1) rpc_get_my_profile()
 -- Returns the current user's profile
 -- ============================================================
