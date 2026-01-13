@@ -274,10 +274,23 @@ export const api = {
    */
   fetchMyRewards: async () => {
     try {
-      console.log('[API] Fetching my rewards...');
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { success: false, error: 'Not authenticated' };
+      if (!user) {
+        console.error('[API] No user found in fetchMyRewards');
+        return { success: false, error: 'Not authenticated' };
+      }
 
+      console.log('[API] Check rewards for User:', user.id);
+
+      // 1. Exact count check (no join)
+      const countRes = await supabase
+        .from('coupons')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      console.log('[API] Raw Coupon Count:', countRes.count, 'Error:', countRes.error);
+
+      // 2. Fetch with Join
       const { data, error } = await supabase
         .from('coupons')
         .select(`
@@ -297,17 +310,17 @@ export const api = {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      console.log('[API] Fetch rewards result:', data?.length, error);
+      console.log('[API] Loaded Rewards Data:', data?.length, error);
 
       if (error) {
-        console.error('Fetch rewards error:', error);
+        console.error('[API] Fetch rewards query error:', error);
         return { success: false, error: error.message };
       }
 
       // Map to Reward interface
       const rewards: Reward[] = data.map((item: any) => ({
         id: item.id,
-        title: item.prize?.name || 'Unknown Prize',
+        title: item.prize?.name || 'Unknown Prize (Data Missing)',
         description: item.prize?.value_description || 'Prize Reward',
         expiryDate: item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'No Expiry',
         isUsed: item.status === 'redeemed',
