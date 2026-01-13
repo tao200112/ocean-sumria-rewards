@@ -132,17 +132,14 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
     const handleLookup = async (idOrEvent?: string | React.SyntheticEvent) => {
         const searchTerm = (typeof idOrEvent === 'string' ? idOrEvent : lookupId).trim().toUpperCase();
 
-        // [DEBUG] Diagnosing "No Reaction"
-        alert(`[Debug] Lookup Triggered.\nSearch Term: "${searchTerm}"\nType: ${typeof idOrEvent}`);
-
         if (!searchTerm) return;
 
         actions.setLoading(true);
         setIsUnauthorized(false);
         try {
-            alert('[Debug] Calling API actions.findUser...');
+            console.log('[Debug] Calling findUser with:', searchTerm);
             const result = await actions.findUser(searchTerm);
-            alert(`[Debug] API Result received:\nSuccess: ${result.success}\nMessage: ${result.message}\nUser found: ${!!result.user}`);
+            console.log('[Debug] findUser result:', result);
 
             if (result.success && result.user) {
                 setLoadedUser(result.user);
@@ -150,8 +147,10 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
                 setLookupId(searchTerm);
             } else {
                 setLoadedUser(null);
-                setLastAction({ msg: result.message || 'Customer not found', type: 'error' });
-                if (result.message && (result.message.includes('UNAUTHORIZED') || result.message.includes('Staff role'))) {
+                const detail = result.message || 'unknown error';
+                setLastAction({ msg: `Customer not found (${searchTerm})`, type: 'error' });
+
+                if (detail.includes('UNAUTHORIZED') || detail.includes('Staff role')) {
                     setIsUnauthorized(true);
                 }
             }
@@ -300,7 +299,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
                                         </span>
                                         <input
                                             type="text"
-                                            placeholder="Customer ID"
+                                            placeholder="Customer ID or Email"
                                             value={lookupId}
                                             onChange={(e) => setLookupId(e.target.value.toUpperCase())}
                                             className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-blue-600 outline-none uppercase text-slate-900"
