@@ -106,6 +106,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
 
     // Loyalty Tab State
     const [lookupId, setLookupId] = useState('');
+    const [isUnauthorized, setIsUnauthorized] = useState(false);
     const [loadedUser, setLoadedUser] = useState<User | null>(null);
     const [billAmount, setBillAmount] = useState<string>('');
 
@@ -118,18 +119,25 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
     const [showScanner, setShowScanner] = useState(false);
     const [scanType, setScanType] = useState<'customer' | 'coupon'>('customer');
 
-    const handleLookup = async () => {
+    const handleLookup = async (idOrEvent?: string | React.SyntheticEvent) => {
+        const searchTerm = (typeof idOrEvent === 'string' ? idOrEvent : lookupId).trim().toUpperCase();
+        if (!searchTerm) return;
+
         actions.setLoading(true);
+        setIsUnauthorized(false);
         try {
-            const searchTerm = lookupId.trim().toUpperCase();
             const result = await actions.findUser(searchTerm);
 
             if (result.success && result.user) {
                 setLoadedUser(result.user);
                 setLastAction(null);
+                setLookupId(searchTerm);
             } else {
                 setLoadedUser(null);
                 setLastAction({ msg: result.message || 'Customer not found', type: 'error' });
+                if (result.message && (result.message.includes('UNAUTHORIZED') || result.message.includes('Staff role'))) {
+                    setIsUnauthorized(true);
+                }
             }
         } catch (e) {
             console.error('Lookup failed', e);
@@ -137,6 +145,16 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
             setLastAction({ msg: 'Lookup failed', type: 'error' });
         } finally {
             actions.setLoading(false);
+        }
+    };
+
+    const handleBecomeStaff = async () => {
+        const res = await actions.becomeStaff();
+        if (res.success) {
+            setIsUnauthorized(false);
+            setLastAction({ msg: "Promoted to Staff! Try searching now.", type: 'success' });
+        } else {
+            setLastAction({ msg: "Promotion failed: " + res.message, type: 'error' });
         }
     };
 
@@ -187,21 +205,10 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
     const handleScanResult = (result: string) => {
         setShowScanner(false);
         if (scanType === 'customer') {
-            setLookupId(result);
-            // Auto trigger lookup after short delay to let state update
-            setTimeout(() => {
-                const found = Object.values(state.users).find(u => u.publicId === result.trim());
-                if (found && found.role === 'CUSTOMER') {
-                    setLoadedUser(found);
-                    setLastAction({ msg: `Found ${found.name}`, type: 'success' });
-                } else {
-                    setLoadedUser(null);
-                    setLastAction({ msg: `Customer ID ${result} not found`, type: 'error' });
-                }
-            }, 100);
+            handleLookup(result);
         } else {
             setCouponCode(result);
-            setLastAction({ msg: 'Code scanned. Tap "Verify & Redeem" to confirm.', type: 'success' });
+            setLastAction({ msg: "Coupon scanned. Ready to redeem.", type: 'success' });
         }
     };
 
@@ -376,14 +383,24 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
 
                         {/* Toast/Notification area */}
                         {lastAction && (
-                            <div className={`border p-3 rounded-lg text-sm flex items-center gap-2 animate-bounce ${lastAction.type === 'success' ? 'bg-green-100 border-green-200 text-green-800' : 'bg-red-100 border-red-200 text-red-800'}`}>
-                                <span className="material-symbols-outlined">{lastAction.type === 'success' ? 'check_circle' : 'error'}</span>
-                                {lastAction.msg}
+                            <div className={`border p-3 rounded-lg text-sm flex flex-col gap-2 animate-bounce ${lastAction.type === 'success' ? 'bg-green-100 border-green-200 text-green-800' : 'bg-red-100 border-red-200 text-red-800'}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined">{lastAction.type === 'success' ? 'check_circle' : 'error'}</span>
+                                    <span>{lastAction.msg}</span>
+                                </div>
+                                {isUnauthorized && (
+                                    <button
+                                        onClick={handleBecomeStaff}
+                                        className="ml-8 self-start text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-lg font-bold"
+                                    >
+                                        [DEV] Promote Self to Staff
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

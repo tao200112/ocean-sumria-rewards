@@ -155,14 +155,32 @@ export const api = {
    */
   findUser: async (publicId: string) => {
     try {
+      console.log('[API] findUser calling RPC with:', publicId);
       const { data, error } = await supabase.rpc('rpc_staff_find_user_by_public_id', {
         p_public_id: publicId
       });
+      console.log('[API] findUser result:', data, error);
 
-      if (error) return { success: false, message: error.message };
+      if (error) {
+        if (error.message.includes('UNAUTHORIZED') || error.message.includes('Auth')) {
+          return { success: false, message: 'UNAUTHORIZED: You need Staff role.' };
+        }
+        return { success: false, message: error.message };
+      }
       if (!data?.found) return { success: false, message: 'Customer not found' };
 
       return { success: true, user: data.profile };
+    } catch (e) {
+      console.error('[API] findUser exception:', e);
+      return { success: false, message: (e as Error).message };
+    }
+  },
+
+  becomeStaff: async () => {
+    try {
+      const { data, error } = await supabase.rpc('rpc_become_staff');
+      if (error) return { success: false, message: error.message };
+      return data;
     } catch (e) {
       return { success: false, message: (e as Error).message };
     }
@@ -256,6 +274,7 @@ export const api = {
    */
   fetchMyRewards: async () => {
     try {
+      console.log('[API] Fetching my rewards...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { success: false, error: 'Not authenticated' };
 
@@ -278,6 +297,8 @@ export const api = {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+      console.log('[API] Fetch rewards result:', data?.length, error);
+
       if (error) {
         console.error('Fetch rewards error:', error);
         return { success: false, error: error.message };
@@ -290,14 +311,15 @@ export const api = {
         description: item.prize?.value_description || 'Prize Reward',
         expiryDate: item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'No Expiry',
         isUsed: item.status === 'redeemed',
-        isNew: false, // Loaded from DB, not "just won"
+        isNew: false,
         type: item.prize?.type === 'discount' ? 'DISCOUNT' : 'FREE_ITEM',
         code: item.code,
-        imageUrl: `https://picsum.photos/seed/${item.prize?.name}/300/200` // Placeholder image based on name
+        imageUrl: `https://picsum.photos/seed/${item.prize?.name || 'prize'}/300/200`
       }));
 
       return { success: true, rewards };
     } catch (e) {
+      console.error('[API] fetchMyRewards exception:', e);
       return { success: false, error: (e as Error).message };
     }
   },

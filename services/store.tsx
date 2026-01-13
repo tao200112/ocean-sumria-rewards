@@ -38,6 +38,7 @@ interface AppContextType {
     updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
     createPrize: (prize: { name: string; weight?: number; displayWeight?: number; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
     deletePrize: (prizeId: string) => Promise<{ success: boolean; error?: string }>;
+    becomeStaff: () => Promise<{ success: boolean; message?: string }>;
   };
 }
 
@@ -337,6 +338,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       return result;
+    },
+    becomeStaff: async () => {
+      return await api.becomeStaff();
     }
   }), [dispatch]); // Actions ONLY depend on dispatch, making them stable across renders.
 
