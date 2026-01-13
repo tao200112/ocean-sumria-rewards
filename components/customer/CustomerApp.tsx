@@ -340,7 +340,7 @@ const RewardsView = ({ rewards, points }: { rewards: Reward[]; points: number })
 // --- View: Profile ---
 const ProfileView = ({ user }: { user: User }) => {
     const { actions } = useAppStore();
-    const [pointsToConvert, setPointsToConvert] = useState(100);
+    const [pointsToConvert, setPointsToConvert] = useState(1000);
 
     const handleConvert = async (spins: number) => {
         const result = await actions.convertPointsToSpins(user.id, spins);
@@ -400,24 +400,24 @@ const ProfileView = ({ user }: { user: User }) => {
                     <span className="material-symbols-outlined text-gold-400">swap_horiz</span>
                     Convert Points
                 </h3>
-                <p className="text-xs text-slate-400 mb-4">100 Points = 1 Lucky Spin</p>
+                <p className="text-xs text-slate-400 mb-4">1000 Points = 1 Lucky Spin</p>
 
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={() => handleConvert(1)}
-                        disabled={(user.points || 0) < 100}
+                        disabled={(user.points || 0) < 1000}
                         className="flex flex-col items-center justify-center p-3 rounded-xl bg-ocean-700 hover:bg-ocean-600 disabled:opacity-50 disabled:hover:bg-ocean-700 border border-ocean-600 transition-colors"
                     >
                         <span className="text-white font-bold">1 Spin</span>
-                        <span className="text-[10px] text-gold-400 font-bold">100 pts</span>
+                        <span className="text-[10px] text-gold-400 font-bold">1000 pts</span>
                     </button>
                     <button
                         onClick={() => handleConvert(5)}
-                        disabled={(user.points || 0) < 500}
+                        disabled={(user.points || 0) < 5000}
                         className="flex flex-col items-center justify-center p-3 rounded-xl bg-ocean-700 hover:bg-ocean-600 disabled:opacity-50 disabled:hover:bg-ocean-700 border border-ocean-600 transition-colors"
                     >
                         <span className="text-white font-bold">5 Spins</span>
-                        <span className="text-[10px] text-gold-400 font-bold">500 pts</span>
+                        <span className="text-[10px] text-gold-400 font-bold">5000 pts</span>
                     </button>
                 </div>
             </div>

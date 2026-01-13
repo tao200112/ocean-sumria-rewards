@@ -42,39 +42,8 @@ export const MOCK_USERS: Record<string, User> = {
   }
 };
 
-// --- Mock Rewards (Customer Wallet) ---
-export const MOCK_REWARDS: Reward[] = [
-  {
-    id: 'r1',
-    title: 'Free Calamari Appetizer',
-    description: 'Crispy, golden-fried calamari rings with marinara.',
-    expiryDate: '2023-10-24',
-    isUsed: false,
-    type: 'FREE_ITEM',
-    code: 'XC-992-00',
-    imageUrl: 'https://picsum.photos/seed/calamari/300/200'
-  },
-  {
-    id: 'r2',
-    title: 'Spicy Tuna Roll',
-    description: 'Fresh tuna with spicy mayo.',
-    expiryDate: '2023-11-01',
-    isUsed: false,
-    type: 'FREE_ITEM',
-    code: 'ST-112-99',
-    imageUrl: 'https://picsum.photos/seed/sushi/300/200'
-  },
-  {
-    id: 'r3',
-    title: '10% Off Total Bill',
-    description: 'Valid for dine-in only.',
-    expiryDate: '2023-10-20',
-    isUsed: true,
-    type: 'DISCOUNT',
-    code: '10-OFF-OLD',
-    imageUrl: 'https://picsum.photos/seed/discount/300/200'
-  }
-];
+// --- Mock Rewards (Customer Wallet) - Empty by default, rewards come from database ---
+export const MOCK_REWARDS: Reward[] = [];
 
 // --- Mock Prize Configuration (Admin) ---
 export const MOCK_PRIZES: PrizeConfig[] = [
