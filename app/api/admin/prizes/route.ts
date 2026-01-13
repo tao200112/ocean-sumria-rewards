@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, name, weight, active, total_available, icon, color, value_description } = body;
+    const { id, name, weight, display_weight, active, total_available, icon, color, value_description } = body;
 
     if (!id) {
         return NextResponse.json({ error: 'Prize ID required' }, { status: 400 });
@@ -66,6 +66,7 @@ export async function PUT(request: NextRequest) {
         .update({
             name,
             weight,
+            display_weight,
             active,
             total_available,
             icon,
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { pool_version_id, name, type, weight, active, icon, color, value_description } = body;
+    const { pool_version_id, name, type, weight, display_weight, active, icon, color, value_description } = body;
 
     const { data, error } = await supabase
         .from('prizes')
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
             name,
             type: type || 'discount',
             weight: weight || 10,
+            display_weight: display_weight || weight || 10,
             active: active ?? true,
             icon: icon || 'stars',
             color: color || '#f2a60d',

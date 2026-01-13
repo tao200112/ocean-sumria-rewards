@@ -14,11 +14,12 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
     const [activeTab, setActiveTab] = useState<'dashboard' | 'prizes' | 'logs'>('dashboard');
     const [activeLogType, setActiveLogType] = useState<'SPIN' | 'REDEMPTION' | 'EARN_POINTS'>('SPIN');
     const [editingPrize, setEditingPrize] = useState<string | null>(null);
-    const [editValues, setEditValues] = useState<{ name: string; weight: number; active: boolean }>({ name: '', weight: 0, active: true });
+    const [editValues, setEditValues] = useState<{ name: string; weight: number; displayWeight: number; active: boolean }>({ name: '', weight: 0, displayWeight: 0, active: true });
     const [saving, setSaving] = useState(false);
     const [addingPrize, setAddingPrize] = useState(false);
     const [newPrizeName, setNewPrizeName] = useState('');
     const [newPrizeWeight, setNewPrizeWeight] = useState(10);
+    const [newPrizeDisplayWeight, setNewPrizeDisplayWeight] = useState(10);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Use prizes from store (which should be loaded from DB) or fallback to props
@@ -296,20 +297,34 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                                             onChange={(e) => setNewPrizeName(e.target.value)}
                                             className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
                                         />
-                                        <input
-                                            type="number"
-                                            placeholder="Weight"
-                                            value={newPrizeWeight}
-                                            onChange={(e) => setNewPrizeWeight(parseInt(e.target.value) || 10)}
-                                            className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm text-center"
-                                        />
+                                        <div className="flex flex-col gap-1 w-20">
+                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Actual</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Weight"
+                                                value={newPrizeWeight}
+                                                onChange={(e) => setNewPrizeWeight(parseInt(e.target.value) || 10)}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-center"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-20">
+                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Display</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Display"
+                                                value={newPrizeDisplayWeight}
+                                                onChange={(e) => setNewPrizeDisplayWeight(parseInt(e.target.value) || 10)}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-center"
+                                            />
+                                        </div>
                                         <button
                                             onClick={async () => {
                                                 if (!newPrizeName.trim()) return;
                                                 setSaving(true);
-                                                await actions.createPrize({ name: newPrizeName, weight: newPrizeWeight });
+                                                await actions.createPrize({ name: newPrizeName, weight: newPrizeWeight, displayWeight: newPrizeDisplayWeight });
                                                 setNewPrizeName('');
                                                 setNewPrizeWeight(10);
+                                                setNewPrizeDisplayWeight(10);
                                                 setAddingPrize(false);
                                                 setSaving(false);
                                             }}
@@ -331,22 +346,34 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
                                             <tr>
-                                                <th className="px-6 py-3">Prize Name</th>
-                                                <th className="px-6 py-3 text-center">Weight</th>
-                                                <th className="px-6 py-3 text-center">Probability</th>
-                                                <th className="px-6 py-3 text-center">Status</th>
-                                                <th className="px-6 py-3 text-right">Actions</th>
+                                                <th className="px-4 py-3">Prize Name</th>
+                                                <th className="px-3 py-3 text-center">
+                                                    <div className="flex flex-col items-center">
+                                                        <span>Actual</span>
+                                                        <span className="text-[10px] text-red-500">(Real %)</span>
+                                                    </div>
+                                                </th>
+                                                <th className="px-3 py-3 text-center">
+                                                    <div className="flex flex-col items-center">
+                                                        <span>Display</span>
+                                                        <span className="text-[10px] text-green-500">(Shown %)</span>
+                                                    </div>
+                                                </th>
+                                                <th className="px-3 py-3 text-center">Status</th>
+                                                <th className="px-3 py-3 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {prizes.map((prize) => {
                                                 const totalWeight = prizes.reduce((acc, p) => acc + p.weight, 0);
-                                                const probability = totalWeight > 0 ? ((prize.weight / totalWeight) * 100).toFixed(1) : '0';
+                                                const totalDisplayWeight = prizes.reduce((acc, p) => acc + (p.displayWeight || p.weight), 0);
+                                                const actualProbability = totalWeight > 0 ? ((prize.weight / totalWeight) * 100).toFixed(1) : '0';
+                                                const displayProbability = totalDisplayWeight > 0 ? (((prize.displayWeight || prize.weight) / totalDisplayWeight) * 100).toFixed(1) : '0';
                                                 const isEditing = editingPrize === prize.id;
 
                                                 return (
                                                     <tr key={prize.id} className="hover:bg-slate-50 transition-colors group">
-                                                        <td className="px-6 py-4 font-medium text-slate-900">
+                                                        <td className="px-4 py-4 font-medium text-slate-900">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="material-symbols-outlined text-slate-400" style={{ color: prize.color }}>{prize.icon}</span>
                                                                 {isEditing ? (
@@ -354,47 +381,60 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                                                                         type="text"
                                                                         value={editValues.name}
                                                                         onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                                                                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                                                                        className="px-2 py-1 border border-blue-300 rounded text-sm w-24"
                                                                     />
                                                                 ) : (
                                                                     prize.name
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center justify-center gap-2">
+                                                        {/* Actual Weight & Probability (red) */}
+                                                        <td className="px-3 py-4">
+                                                            <div className="flex flex-col items-center gap-1">
                                                                 {isEditing ? (
                                                                     <input
                                                                         type="number"
                                                                         value={editValues.weight}
                                                                         onChange={(e) => setEditValues({ ...editValues, weight: parseInt(e.target.value) || 0 })}
-                                                                        className="w-16 px-2 py-1 border border-blue-300 rounded text-center"
+                                                                        className="w-14 px-1 py-1 border border-red-300 rounded text-center text-sm"
                                                                     />
                                                                 ) : (
-                                                                    <span className="font-mono">{prize.weight}</span>
+                                                                    <span className="font-mono text-sm">{prize.weight}</span>
                                                                 )}
+                                                                <span className="text-[10px] text-red-500 font-bold">{actualProbability}%</span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <span className="px-2 py-1 bg-slate-100 rounded text-xs font-bold" style={{ color: prize.color }}>
-                                                                {probability}%
-                                                            </span>
+                                                        {/* Display Weight & Probability (green) */}
+                                                        <td className="px-3 py-4">
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                {isEditing ? (
+                                                                    <input
+                                                                        type="number"
+                                                                        value={editValues.displayWeight}
+                                                                        onChange={(e) => setEditValues({ ...editValues, displayWeight: parseInt(e.target.value) || 0 })}
+                                                                        className="w-14 px-1 py-1 border border-green-300 rounded text-center text-sm"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="font-mono text-sm">{prize.displayWeight || prize.weight}</span>
+                                                                )}
+                                                                <span className="text-[10px] text-green-500 font-bold">{displayProbability}%</span>
+                                                            </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
+                                                        <td className="px-3 py-4 text-center">
                                                             {isEditing ? (
                                                                 <button
                                                                     onClick={() => setEditValues({ ...editValues, active: !editValues.active })}
                                                                     className={`px-2 py-1 rounded text-xs font-bold ${editValues.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}
                                                                 >
-                                                                    {editValues.active ? 'Active' : 'Inactive'}
+                                                                    {editValues.active ? 'On' : 'Off'}
                                                                 </button>
                                                             ) : (
                                                                 <div className={`inline-block w-3 h-3 rounded-full ${prize.active ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                                                             )}
                                                         </td>
-                                                        <td className="px-6 py-4 text-right">
+                                                        <td className="px-3 py-4 text-right">
                                                             {isEditing ? (
-                                                                <div className="flex justify-end gap-2">
+                                                                <div className="flex justify-end gap-1">
                                                                     <button
                                                                         onClick={async () => {
                                                                             setSaving(true);
@@ -402,29 +442,30 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                                                                                 id: prize.id,
                                                                                 name: editValues.name,
                                                                                 weight: editValues.weight,
+                                                                                displayWeight: editValues.displayWeight,
                                                                                 active: editValues.active
                                                                             });
                                                                             setEditingPrize(null);
                                                                             setSaving(false);
                                                                         }}
                                                                         disabled={saving}
-                                                                        className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+                                                                        className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
                                                                     >
                                                                         {saving ? '...' : 'Save'}
                                                                     </button>
                                                                     <button
                                                                         onClick={() => setEditingPrize(null)}
-                                                                        className="px-3 py-1 bg-slate-200 text-slate-700 rounded text-xs font-bold hover:bg-slate-300"
+                                                                        className="px-2 py-1 bg-slate-200 text-slate-700 rounded text-xs font-bold hover:bg-slate-300"
                                                                     >
-                                                                        Cancel
+                                                                        ✕
                                                                     </button>
                                                                 </div>
                                                             ) : (
-                                                                <div className="flex justify-end gap-2">
+                                                                <div className="flex justify-end gap-1">
                                                                     <button
                                                                         onClick={() => {
                                                                             setEditingPrize(prize.id);
-                                                                            setEditValues({ name: prize.name, weight: prize.weight, active: prize.active });
+                                                                            setEditValues({ name: prize.name, weight: prize.weight, displayWeight: prize.displayWeight || prize.weight, active: prize.active });
                                                                         }}
                                                                         className="text-slate-400 hover:text-blue-600"
                                                                     >

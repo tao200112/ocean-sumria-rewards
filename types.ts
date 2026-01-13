@@ -41,7 +41,8 @@ export interface Reward {
 export interface PrizeConfig {
   id: string;
   name: string;
-  weight: number; // Probability weight
+  weight: number; // Actual probability weight (used for real spin)
+  displayWeight: number; // Display probability weight (shown to users)
   totalAvailable: number | 'unlimited';
   winLimit: string;
   active: boolean;

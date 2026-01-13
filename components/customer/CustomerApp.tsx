@@ -237,9 +237,9 @@ const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
     const { state } = useAppStore();
     const activePrizes = state.prizes.filter(p => p.active);
 
-    // 计算概率
-    const totalWeight = activePrizes.reduce((sum, p) => sum + p.weight, 0);
-    const getProbability = (weight: number) => ((weight / totalWeight) * 100).toFixed(1);
+    // 计算显示给用户的概率（使用 displayWeight）
+    const totalDisplayWeight = activePrizes.reduce((sum, p) => sum + (p.displayWeight || p.weight), 0);
+    const getProbability = (prize: any) => (((prize.displayWeight || prize.weight) / totalDisplayWeight) * 100).toFixed(1);
 
     return (
         <div className="px-6 pt-6 pb-24">
@@ -312,7 +312,7 @@ const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
                                     className="text-sm font-bold px-2 py-1 rounded-lg"
                                     style={{ backgroundColor: prize.color + '20', color: prize.color }}
                                 >
-                                    {getProbability(prize.weight)}%
+                                    {getProbability(prize)}%
                                 </span>
                             </div>
                         </div>

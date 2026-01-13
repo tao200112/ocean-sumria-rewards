@@ -47,13 +47,14 @@ export const MOCK_REWARDS: Reward[] = [];
 
 // --- Prize Configuration (matches database prizes) ---
 // NOTE: These should eventually be loaded from the database
+// weight = actual probability, displayWeight = shown to users
 export const MOCK_PRIZES: PrizeConfig[] = [
-  { id: 'p1', name: '10% Off', weight: 50, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'local_offer', color: '#3b82f6' },
-  { id: 'p2', name: 'Free Appetizer', weight: 25, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'restaurant', color: '#10b981' },
-  { id: 'p3', name: 'Free Entree', weight: 10, totalAvailable: 100, winLimit: '1/user', active: true, icon: 'dinner_dining', color: '#f59e0b' },
-  { id: 'p4', name: 'BOGO', weight: 5, totalAvailable: 50, winLimit: '1/user', active: true, icon: 'celebration', color: '#8b5cf6' },
-  { id: 'p5', name: '50 Points', weight: 15, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'stars', color: '#f2a60d' },
-  { id: 'p6', name: 'Try Again', weight: 30, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'refresh', color: '#64748b' }
+  { id: 'p1', name: '10% Off', weight: 50, displayWeight: 50, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'local_offer', color: '#3b82f6' },
+  { id: 'p2', name: 'Free Appetizer', weight: 25, displayWeight: 25, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'restaurant', color: '#10b981' },
+  { id: 'p3', name: 'Free Entree', weight: 10, displayWeight: 15, totalAvailable: 100, winLimit: '1/user', active: true, icon: 'dinner_dining', color: '#f59e0b' },
+  { id: 'p4', name: 'BOGO', weight: 5, displayWeight: 10, totalAvailable: 50, winLimit: '1/user', active: true, icon: 'celebration', color: '#8b5cf6' },
+  { id: 'p5', name: '50 Points', weight: 15, displayWeight: 15, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'stars', color: '#f2a60d' },
+  { id: 'p6', name: 'Try Again', weight: 30, displayWeight: 20, totalAvailable: 'unlimited', winLimit: 'None', active: true, icon: 'refresh', color: '#64748b' }
 ];
 
 // --- Mock Activity Logs ---

@@ -310,12 +310,18 @@ export const api = {
   /**
    * Update a prize
    */
-  updatePrize: async (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
+  updatePrize: async (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
     try {
+      // Map camelCase displayWeight to snake_case display_weight for API
+      const payload: any = { ...prize };
+      if (prize.displayWeight !== undefined) {
+        payload.display_weight = prize.displayWeight;
+      }
+
       const res = await fetch('/api/admin/prizes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prize)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (!res.ok) {
@@ -330,12 +336,18 @@ export const api = {
   /**
    * Create a new prize
    */
-  createPrize: async (prize: { pool_version_id: string; name: string; type?: string; weight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
+  createPrize: async (prize: { pool_version_id: string; name: string; type?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
     try {
+      // Map camelCase displayWeight to snake_case display_weight for API
+      const payload: any = { ...prize };
+      if (prize.displayWeight !== undefined) {
+        payload.display_weight = prize.displayWeight;
+      }
+
       const res = await fetch('/api/admin/prizes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prize)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (!res.ok) {

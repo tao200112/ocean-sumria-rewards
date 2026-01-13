@@ -32,8 +32,8 @@ interface AppContextType {
     setLogs: (logs: ActivityLog[]) => void;
     // Prize Management
     loadPrizes: () => Promise<void>;
-    updatePrize: (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
-    createPrize: (prize: { name: string; weight?: number; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
+    updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
+    createPrize: (prize: { name: string; weight?: number; displayWeight?: number; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
     deletePrize: (prizeId: string) => Promise<{ success: boolean; error?: string }>;
   };
 }
@@ -108,6 +108,7 @@ const appReducer = (state: AppState & { isLoading: boolean; poolId?: string }, a
         id: p.id,
         name: p.name,
         weight: p.weight || 10,
+        displayWeight: p.display_weight ?? p.weight ?? 10, // Use display_weight if available, fallback to weight
         totalAvailable: p.total_available === null ? 'unlimited' : p.total_available,
         winLimit: p.win_limit || 'None',
         active: p.active ?? true,
@@ -258,7 +259,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: 'SET_PRIZES', payload: { prizes: result.prizes, poolId: result.poolId } });
       }
     },
-    updatePrize: async (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string }) => {
+    updatePrize: async (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => {
       const result = await api.updatePrize(prize);
       if (result.success) {
         // Reload prizes to get fresh data
@@ -269,7 +270,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       return result;
     },
-    createPrize: async (prize: { name: string; weight?: number; icon?: string; color?: string }) => {
+    createPrize: async (prize: { name: string; weight?: number; displayWeight?: number; icon?: string; color?: string }) => {
       // Need to get poolId from state - but since we can't access state directly here,
       // we'll fetch it first
       const poolResult = await api.fetchPrizes();
