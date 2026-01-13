@@ -12,12 +12,12 @@ type Action =
   | { type: 'ADD_REWARD'; payload: Reward }
   | { type: 'MARK_REWARD_USED'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_NEW_REWARD_FLAG' }
-  | { type: 'SET_LOGS'; payload: ActivityLog[] };
+  | { type: 'SET_LOGS'; payload: ActivityLog[] }
+  | { type: 'SET_PRIZES'; payload: { prizes: PrizeConfig[]; poolId?: string } };
 
 interface AppContextType {
-  state: AppState & { isLoading: boolean };
+  state: AppState & { isLoading: boolean; poolId?: string };
   actions: {
     logout: () => Promise<void>;
     grantSpinsByPublicId: (staffId: string, publicId: string, billAmount: number) => Promise<{ success: boolean; message: string }>;
@@ -30,11 +30,16 @@ interface AppContextType {
     setUser: (user: User | null) => void;
     setLoading: (loading: boolean) => void;
     setLogs: (logs: ActivityLog[]) => void;
+    // Prize Management
+    loadPrizes: () => Promise<void>;
+    updatePrize: (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
+    createPrize: (prize: { name: string; weight?: number; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
+    deletePrize: (prizeId: string) => Promise<{ success: boolean; error?: string }>;
   };
 }
 
 // --- Initial State ---
-const initialState: AppState & { isLoading: boolean } = {
+const initialState: AppState & { isLoading: boolean; poolId?: string } = {
   currentUser: null,
   activeRole: UserRole.UNKNOWN, // Start unknown
   users: {}, // Only used for lookup cache in this version
@@ -43,10 +48,11 @@ const initialState: AppState & { isLoading: boolean } = {
   prizes: MOCK_PRIZES,
   lastCreatedRewardId: null,
   isLoading: true,
+  poolId: undefined,
 };
 
 // --- Reducer ---
-const appReducer = (state: AppState & { isLoading: boolean }, action: Action): AppState & { isLoading: boolean } => {
+const appReducer = (state: AppState & { isLoading: boolean; poolId?: string }, action: Action): AppState & { isLoading: boolean; poolId?: string } => {
   const timestamp = new Date().toLocaleString();
 
   switch (action.type) {
@@ -95,6 +101,20 @@ const appReducer = (state: AppState & { isLoading: boolean }, action: Action): A
 
     case 'SET_LOGS':
       return { ...state, logs: action.payload };
+
+    case 'SET_PRIZES':
+      // Convert database prizes to PrizeConfig format
+      const prizeConfigs: PrizeConfig[] = action.payload.prizes.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        weight: p.weight || 10,
+        totalAvailable: p.total_available === null ? 'unlimited' : p.total_available,
+        winLimit: p.win_limit || 'None',
+        active: p.active ?? true,
+        icon: p.icon || 'stars',
+        color: p.color || '#f2a60d'
+      }));
+      return { ...state, prizes: prizeConfigs, poolId: action.payload.poolId };
 
     default:
       return state;
@@ -229,7 +249,54 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     clearNewRewardFlag: () => dispatch({ type: 'CLEAR_NEW_REWARD_FLAG' }),
     setUser: (user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
     setLoading: (loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }),
-    setLogs: (logs: ActivityLog[]) => dispatch({ type: 'SET_LOGS', payload: logs })
+    setLogs: (logs: ActivityLog[]) => dispatch({ type: 'SET_LOGS', payload: logs }),
+
+    // Prize Management
+    loadPrizes: async () => {
+      const result = await api.fetchPrizes();
+      if (result.success) {
+        dispatch({ type: 'SET_PRIZES', payload: { prizes: result.prizes, poolId: result.poolId } });
+      }
+    },
+    updatePrize: async (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string }) => {
+      const result = await api.updatePrize(prize);
+      if (result.success) {
+        // Reload prizes to get fresh data
+        const refreshResult = await api.fetchPrizes();
+        if (refreshResult.success) {
+          dispatch({ type: 'SET_PRIZES', payload: { prizes: refreshResult.prizes, poolId: refreshResult.poolId } });
+        }
+      }
+      return result;
+    },
+    createPrize: async (prize: { name: string; weight?: number; icon?: string; color?: string }) => {
+      // Need to get poolId from state - but since we can't access state directly here,
+      // we'll fetch it first
+      const poolResult = await api.fetchPrizes();
+      if (!poolResult.poolId) {
+        return { success: false, error: 'No prize pool found' };
+      }
+      const result = await api.createPrize({ ...prize, pool_version_id: poolResult.poolId });
+      if (result.success) {
+        // Reload prizes to get fresh data
+        const refreshResult = await api.fetchPrizes();
+        if (refreshResult.success) {
+          dispatch({ type: 'SET_PRIZES', payload: { prizes: refreshResult.prizes, poolId: refreshResult.poolId } });
+        }
+      }
+      return result;
+    },
+    deletePrize: async (prizeId: string) => {
+      const result = await api.deletePrize(prizeId);
+      if (result.success) {
+        // Reload prizes to get fresh data
+        const refreshResult = await api.fetchPrizes();
+        if (refreshResult.success) {
+          dispatch({ type: 'SET_PRIZES', payload: { prizes: refreshResult.prizes, poolId: refreshResult.poolId } });
+        }
+      }
+      return result;
+    }
   }), [dispatch]); // Actions ONLY depend on dispatch, making them stable across renders.
 
   // We need to fetch points/logs inside the actions if we want current state, 

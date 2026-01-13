@@ -285,5 +285,83 @@ export const api = {
     } catch (e) {
       return { success: false, message: (e as Error).message };
     }
+  },
+
+  // ==================== Prize Management ====================
+
+  /**
+   * Fetch all prizes from database
+   */
+  fetchPrizes: async () => {
+    try {
+      const res = await fetch('/api/admin/prizes');
+      const json = await res.json();
+      if (!res.ok) {
+        console.error('[API] fetchPrizes error:', json.error);
+        return { success: false, prizes: [], error: json.error };
+      }
+      return { success: true, prizes: json.prizes || [], poolId: json.poolId };
+    } catch (e) {
+      console.error('[API] fetchPrizes exception:', e);
+      return { success: false, prizes: [], error: (e as Error).message };
+    }
+  },
+
+  /**
+   * Update a prize
+   */
+  updatePrize: async (prize: { id: string; name?: string; weight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
+    try {
+      const res = await fetch('/api/admin/prizes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prize)
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        return { success: false, error: json.error };
+      }
+      return { success: true, prize: json.prize };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  },
+
+  /**
+   * Create a new prize
+   */
+  createPrize: async (prize: { pool_version_id: string; name: string; type?: string; weight?: number; active?: boolean; icon?: string; color?: string; value_description?: string }) => {
+    try {
+      const res = await fetch('/api/admin/prizes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prize)
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        return { success: false, error: json.error };
+      }
+      return { success: true, prize: json.prize };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  },
+
+  /**
+   * Delete a prize
+   */
+  deletePrize: async (prizeId: string) => {
+    try {
+      const res = await fetch(`/api/admin/prizes?id=${prizeId}`, {
+        method: 'DELETE'
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        return { success: false, error: json.error };
+      }
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
   }
 };
