@@ -1,0 +1,36 @@
+File List for Tile Match Implementation:
+
+1. sql/13_tile_match.sql
+   - Database schema: activities (update), wallets/profiles (update), tile_match_daily, tile_match_runs, points_ledger.
+   - RLS policies and RPC functions (spend/grant points).
+   - Seed data.
+
+2. types/tile-match.ts
+   - TypeScript interfaces for GameState, Run, Tile, etc.
+
+3. lib/tile-match/game-logic.ts
+   - Core game logic: Level generation (seed based), overlapping detection, shuffling, undo.
+
+4. app/api/tile-match/start/route.ts
+   - POST endpoint to start game (deduct play count, generate run).
+
+5. app/api/tile-match/buy/route.ts
+   - POST endpoint to buy extra plays.
+
+6. app/api/tile-match/finish/route.ts
+   - POST endpoint to validate and finish game (grant rewards).
+
+7. components/activities/tile-match/AssetLoader.tsx
+   - Helper to pre-load images into memory/cache.
+
+8. components/activities/tile-match/GameScreen.tsx
+   - Main game container, handles state, timer, UI overlays.
+
+9. components/activities/tile-match/TileBoard.tsx
+   - The visual board rendering tiles (using absolute positioning to simulate canvas).
+
+10. app/activities/tile-match/page.tsx
+    - Main entry page (Lobby + Game switching).
+
+11. public/game-assets/ (Instructions only)
+    - Directory structure guidance for assets.
