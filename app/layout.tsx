@@ -7,7 +7,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Ocean Sumria Rewards',
+  title: 'Ocean Samurai Rewards',
   description: 'Rewards System',
 }
 

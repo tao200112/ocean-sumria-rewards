@@ -33,7 +33,7 @@ export const LoginScreen = () => {
           <div className="size-20 bg-ocean-900 border-2 border-gold-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-gold-400/20">
             <span className="material-symbols-outlined text-4xl text-gold-400">water_drop</span>
           </div>
-          <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Ocean Sumria</h1>
+          <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Ocean Samurai</h1>
           <p className="text-slate-400">Rewards & Loyalty Program</p>
         </div>
 
@@ -58,9 +58,9 @@ export const LoginScreen = () => {
         </div>
 
         {error && (
-            <div className="mt-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
-                {error}
-            </div>
+          <div className="mt-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+            {error}
+          </div>
         )}
 
         <div className="mt-12 text-center">

@@ -342,7 +342,7 @@ const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
                 <ul className="space-y-3 text-sm text-slate-400">
                     <li className="flex items-start gap-2">
                         <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
-                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">1 cent</strong> spent at Ocean Sumria</span>
+                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">1 cent</strong> spent at Ocean Samurai</span>
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
@@ -561,7 +561,7 @@ export const CustomerApp: React.FC<CustomerProps> = ({ user, rewards, onNavigate
             <header className="sticky top-0 z-40 bg-ocean-900/80 backdrop-blur-md border-b border-ocean-800 px-5 py-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-gold-400">water_drop</span>
-                    <span className="font-bold text-white uppercase tracking-wider text-sm">Ocean Sumria</span>
+                    <span className="font-bold text-white uppercase tracking-wider text-sm">Ocean Samurai</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="size-8 rounded-full bg-cover bg-center border border-ocean-700" style={{ backgroundImage: `url(${user.avatarUrl})` }}></div>

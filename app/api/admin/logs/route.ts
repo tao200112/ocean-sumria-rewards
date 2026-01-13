@@ -28,8 +28,7 @@ export async function GET() {
             *,
             user:user_id (
                 public_id,
-                name,
-                avatar_url
+                name
             )
         `)
         .order('created_at', { ascending: false })
