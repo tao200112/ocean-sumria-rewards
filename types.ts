@@ -80,5 +80,19 @@ export interface AppState {
   rewards: Reward[];
   logs: ActivityLog[];
   prizes: PrizeConfig[];
+  activities: Activity[];
   lastCreatedRewardId: string | null;
+}
+
+export interface Activity {
+  slug: string;
+  title: string;
+  subtitle: string;
+  type: 'wheel' | 'game' | 'task';
+  route: string;
+  iconKey: string;
+  badge?: string;
+  isEnabled: boolean;
+  sortOrder: number;
+  meta: any;
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { User, Reward, PrizeConfig, ActivityLog, AppState, UserRole, SpinResult } from '../types';
+import { User, Reward, PrizeConfig, Activity, ActivityLog, AppState, UserRole, SpinResult } from '../types';
 import { supabase } from './supabase';
 import { api } from './api';
 
@@ -14,7 +14,8 @@ type Action =
   | { type: 'CLEAR_NEW_REWARD_FLAG' }
   | { type: 'SET_LOGS'; payload: ActivityLog[] }
   | { type: 'SET_REWARDS'; payload: Reward[] }
-  | { type: 'SET_PRIZES'; payload: { prizes: PrizeConfig[]; poolId?: string } };
+  | { type: 'SET_PRIZES'; payload: { prizes: PrizeConfig[]; poolId?: string } }
+  | { type: 'SET_ACTIVITIES'; payload: Activity[] };
 
 interface AppContextType {
   state: AppState & { isLoading: boolean; poolId?: string };
@@ -33,6 +34,7 @@ interface AppContextType {
     setLogs: (logs: ActivityLog[]) => void;
     loadLogs: () => Promise<void>;
     loadRewards: () => Promise<void>;
+    loadActivities: () => Promise<void>;
     // Prize Management
     loadPrizes: () => Promise<void>;
     updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -51,6 +53,7 @@ const initialState: AppState & { isLoading: boolean; poolId?: string } = {
   rewards: [],
   logs: [],
   prizes: [],
+  activities: [],
   lastCreatedRewardId: null,
   isLoading: true,
   poolId: undefined,
@@ -124,6 +127,9 @@ const appReducer = (state: AppState & { isLoading: boolean; poolId?: string }, a
         color: p.color || '#f2a60d'
       }));
       return { ...state, prizes: prizeConfigs, poolId: action.payload.poolId };
+
+    case 'SET_ACTIVITIES':
+      return { ...state, activities: action.payload };
 
     default:
       return state;
@@ -294,6 +300,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     },
 
+    loadActivities: async () => {
+      const result = await api.fetchActivities();
+      if (result.success) {
+        dispatch({ type: 'SET_ACTIVITIES', payload: result.activities });
+      }
+    },
     // Prize Management
     loadPrizes: async () => {
       const result = await api.fetchPrizes();

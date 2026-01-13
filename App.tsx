@@ -12,6 +12,7 @@ function AppRouter() {
 
   // --- Virtual Router Logic ---
   // Syncs window URL with active role for "Routing" feel without a router lib
+  // Syncs window URL with active role for "Routing" feel without a router lib
   useEffect(() => {
     if (!state.currentUser) {
       window.history.replaceState(null, '', '/login');
@@ -23,10 +24,24 @@ function AppRouter() {
     if (role === UserRole.STAFF) path = '/staff';
     if (role === UserRole.ADMIN) path = '/admin';
 
+    // Ensure we don't mess up sub-paths (like /activities/...)
+    if (window.location.pathname.startsWith('/activities')) return;
+
     if (window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }
-  }, [state.currentUser]);
+
+    // Parse tab param for Customer
+    if (role === UserRole.CUSTOMER) {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && ['home', 'rewards', 'profile'].includes(tab)) {
+        setCustomerView(tab);
+      } else {
+        setCustomerView('home');
+      }
+    }
+  }, [state.currentUser, window.location.search]);
 
 
   if (state.isLoading) {

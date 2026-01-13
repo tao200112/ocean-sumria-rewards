@@ -517,5 +517,41 @@ export const api = {
       console.error('[API] fetchActivityLogs exception:', e);
       return { success: false, logs: [], error: (e as Error).message };
     }
+  },
+
+  /**
+   * Fetch Activities
+   */
+  fetchActivities: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('is_enabled', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        console.error('[API] fetchActivities error:', error);
+        return { success: false, activities: [], error: error.message };
+      }
+
+      // Map snake_case to camelCase
+      const activities = data.map((a: any) => ({
+        slug: a.slug,
+        title: a.title,
+        subtitle: a.subtitle,
+        type: a.type,
+        route: a.route,
+        iconKey: a.icon_key,
+        badge: a.badge,
+        isEnabled: a.is_enabled,
+        sortOrder: a.sort_order,
+        meta: a.meta
+      }));
+
+      return { success: true, activities };
+    } catch (e) {
+      return { success: false, activities: [], error: (e as Error).message };
+    }
   }
 };
