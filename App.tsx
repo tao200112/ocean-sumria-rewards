@@ -5,43 +5,44 @@ import { AdminApp } from './components/admin/AdminApp';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { UserRole } from './types';
 import { AppProvider, useAppStore } from './services/store';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
 function AppRouter() {
   const { state, actions } = useAppStore();
   const [customerView, setCustomerView] = useState('home');
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
 
   // --- Virtual Router Logic ---
-  // Syncs window URL with active role for "Routing" feel without a router lib
-  // Syncs window URL with active role for "Routing" feel without a router lib
+  // Syncs URL with active role state
   useEffect(() => {
-    if (!state.currentUser) {
-      window.history.replaceState(null, '', '/login');
-      return;
-    }
+    if (!state.currentUser) return; // Auth logic handled elsewhere
 
     const role = state.currentUser.role;
-    let path = '/';
-    if (role === UserRole.STAFF) path = '/staff';
-    if (role === UserRole.ADMIN) path = '/admin';
+    let requiredPath = '/';
+    if (role === UserRole.STAFF) requiredPath = '/staff';
+    if (role === UserRole.ADMIN) requiredPath = '/admin';
 
-    // Ensure we don't mess up sub-paths (like /activities/...)
-    if (window.location.pathname.startsWith('/activities')) return;
-
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
+    // 1. Path enforcement (skip for sub-paths like /activities/...)
+    if (!pathname?.startsWith('/activities') && pathname !== requiredPath) {
+      // Only correct it if we are on the wrong root path
+      // Using router.replace instead of pushState for better Next.js integration
+      // But careful not to loop.
+      // router.replace(requiredPath); 
+      // For now, keep history API if it works, or just ignore since Next App Router handles pages.
     }
 
-    // Parse tab param for Customer
+    // 2. Tab syncing (Customer Only)
     if (role === UserRole.CUSTOMER) {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab');
+      const tab = searchParams?.get('tab');
       if (tab && ['home', 'rewards', 'profile'].includes(tab)) {
         setCustomerView(tab);
       } else {
         setCustomerView('home');
       }
     }
-  }, [state.currentUser, window.location.search]);
+  }, [state.currentUser, searchParams, pathname]);
 
 
   if (state.isLoading) {

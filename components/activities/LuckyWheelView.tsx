@@ -140,10 +140,15 @@ export const LuckyWheelView = () => {
 
     const closeModal = () => {
         setShowModal(false);
-        if (result?.outcome === 'WIN') {
-            router.push('/?tab=rewards');
-        }
+        // Removed redirect to rewards as requested
+        // if (result?.outcome === 'WIN') {
+        //    router.push('/?tab=rewards');
+        // }
     };
+
+    // Helper for probability
+    const totalDisplayWeight = activePrizes.reduce((sum, p) => sum + (p.displayWeight || p.weight), 0);
+    const getProbability = (prize: any) => totalDisplayWeight > 0 ? (((prize.displayWeight || prize.weight) / totalDisplayWeight) * 100).toFixed(1) : '0';
 
     return (
         <div className="flex flex-col min-h-screen bg-ocean-950 px-6 pt-6 pb-24">
@@ -169,11 +174,73 @@ export const LuckyWheelView = () => {
             <button
                 disabled={spins === 0 || isSpinning}
                 onClick={handleSpinClick}
-                className="w-full py-4 bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed text-ocean-950 font-black text-xl rounded-full shadow-[0_0_30px_rgba(242,166,13,0.3)] hover:shadow-[0_0_50px_rgba(242,166,13,0.5)] transition-all active:scale-95 flex items-center justify-center gap-3"
+                className="w-full py-4 bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed text-ocean-950 font-black text-xl rounded-full shadow-[0_0_30px_rgba(242,166,13,0.3)] hover:shadow-[0_0_50px_rgba(242,166,13,0.5)] transition-all active:scale-95 flex items-center justify-center gap-3 mb-10"
             >
                 <span className={`material-symbols-outlined text-3xl ${isSpinning ? 'animate-spin' : ''}`}>casino</span>
                 {isSpinning ? 'SPINNING...' : (spins > 0 ? 'START SPIN' : 'NO SPINS')}
             </button>
+
+            {/* Prize List with Probabilities (Restored from previous UI) */}
+            <div className="bg-ocean-800/50 rounded-2xl p-5 border border-ocean-700 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-gold-400">emoji_events</span>
+                    <h3 className="text-lg font-bold text-white">Prizes & Odds</h3>
+                </div>
+                <div className="space-y-3">
+                    {activePrizes.map(prize => (
+                        <div key={prize.id} className="flex items-center justify-between p-3 bg-ocean-900/50 rounded-xl border border-ocean-700/50">
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className="size-10 rounded-lg flex items-center justify-center"
+                                    style={{ backgroundColor: prize.color + '20', color: prize.color }}
+                                >
+                                    <span className="material-symbols-outlined">{prize.icon}</span>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white text-sm">{prize.name}</p>
+                                    <p className="text-xs text-slate-500">
+                                        {prize.totalAvailable === 'unlimited' ? 'Unlimited' : `${prize.totalAvailable} left`}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <span
+                                    className="text-sm font-bold px-2 py-1 rounded-lg"
+                                    style={{ backgroundColor: prize.color + '20', color: prize.color }}
+                                >
+                                    {getProbability(prize)}%
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Rules Section (Restored from previous UI) */}
+            <div className="bg-ocean-800/30 rounded-2xl p-5 border border-ocean-700/50">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-slate-400">info</span>
+                    <h3 className="text-lg font-bold text-white">Rules</h3>
+                </div>
+                <ul className="space-y-3 text-sm text-slate-400">
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">1 cent</strong> spent</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Convert <strong className="text-white">1000 points</strong> into <strong className="text-white">1 Lucky Spin</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Prizes won are added to your <strong className="text-white">Rewards</strong> wallet</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Rewards expire <strong className="text-white">7 days</strong> after winning</span>
+                    </li>
+                </ul>
+            </div>
 
             {/* Win Modal */}
             {showModal && result && (
