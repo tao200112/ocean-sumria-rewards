@@ -142,8 +142,10 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
             console.log('[Debug] findUser result:', result);
 
             if (result.success && result.user) {
+                // UI Verification
+                // alert(`Verify: User Found - ${result.user.name} (${result.user.publicId})`);
                 setLoadedUser(result.user);
-                setLastAction(null);
+                setLastAction({ msg: `Found: ${result.user.name} (${result.user.publicId})`, type: 'success' });
                 setLookupId(searchTerm);
             } else {
                 setLoadedUser(null);
