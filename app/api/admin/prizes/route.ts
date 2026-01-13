@@ -55,6 +55,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('[API] PUT Prize Body:', body);
     const { id, name, weight, display_weight, active, total_available, icon, color, value_description } = body;
 
     if (!id) {
@@ -78,7 +79,8 @@ export async function PUT(request: NextRequest) {
         .single();
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[API] Prize Operation Error:', error);
+        return NextResponse.json({ error: error.message, details: error }, { status: 500 });
     }
 
     return NextResponse.json({ prize: data });
@@ -105,6 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('[API] POST Prize Body:', body);
     const { pool_version_id, name, type, weight, display_weight, active, icon, color, value_description } = body;
 
     const { data, error } = await supabase
@@ -124,7 +127,8 @@ export async function POST(request: NextRequest) {
         .single();
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[API] Prize Operation Error:', error);
+        return NextResponse.json({ error: error.message, details: error }, { status: 500 });
     }
 
     return NextResponse.json({ prize: data });
