@@ -121,12 +121,18 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
 
     const handleLookup = async (idOrEvent?: string | React.SyntheticEvent) => {
         const searchTerm = (typeof idOrEvent === 'string' ? idOrEvent : lookupId).trim().toUpperCase();
+
+        // [DEBUG] Diagnosing "No Reaction"
+        alert(`[Debug] Lookup Triggered.\nSearch Term: "${searchTerm}"\nType: ${typeof idOrEvent}`);
+
         if (!searchTerm) return;
 
         actions.setLoading(true);
         setIsUnauthorized(false);
         try {
+            alert('[Debug] Calling API actions.findUser...');
             const result = await actions.findUser(searchTerm);
+            alert(`[Debug] API Result received:\nSuccess: ${result.success}\nMessage: ${result.message}\nUser found: ${!!result.user}`);
 
             if (result.success && result.user) {
                 setLoadedUser(result.user);
@@ -140,6 +146,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
                 }
             }
         } catch (e) {
+            alert(`[Debug] Exception: ${(e as Error).message}`);
             console.error('Lookup failed', e);
             setLoadedUser(null);
             setLastAction({ msg: 'Lookup failed', type: 'error' });
