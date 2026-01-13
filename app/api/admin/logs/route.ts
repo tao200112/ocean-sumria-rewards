@@ -26,7 +26,7 @@ export async function GET() {
         .from('ledger')
         .select(`
             *,
-            user:profiles!ledger_user_id_fkey (
+            user:user_id (
                 public_id,
                 name,
                 avatar_url

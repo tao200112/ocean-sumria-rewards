@@ -38,6 +38,7 @@ interface AppContextType {
     updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
     createPrize: (prize: { name: string; weight?: number; displayWeight?: number; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
     deletePrize: (prizeId: string) => Promise<{ success: boolean; error?: string }>;
+    publishPool: (poolId: string) => Promise<{ success: boolean; message?: string }>;
     becomeStaff: () => Promise<{ success: boolean; message?: string }>;
   };
 }
@@ -338,6 +339,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       return result;
+    },
+    publishPool: async (poolId: string) => {
+      return await api.publishPool(poolId);
     },
     becomeStaff: async () => {
       return await api.becomeStaff();

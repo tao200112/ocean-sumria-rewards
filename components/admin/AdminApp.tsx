@@ -25,6 +25,7 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
     // Use data from store (which should be loaded from DB) or fallback to props
     const prizes = state.prizes.length > 0 ? state.prizes : initialPrizes;
     const logs = state.logs.length > 0 ? state.logs : initialLogs;
+    const currentUser = state.currentUser || user;
 
     // Handle logout
     const handleLogout = async () => {
@@ -157,10 +158,10 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                 </nav>
                 <div className="p-4 border-t border-slate-200 space-y-3">
                     <div className="flex items-center gap-3">
-                        <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=f59e0b&color=fff`} className="size-8 rounded-full" alt="Admin" />
+                        <img src={currentUser.avatarUrl || `https://ui-avatars.com/api/?name=${currentUser.name}&background=f59e0b&color=fff`} className="size-8 rounded-full" alt="Admin" />
                         <div className="text-xs flex-1">
-                            <p className="font-bold text-slate-900">{user.name}</p>
-                            <p className="text-slate-500 capitalize">{user.role}</p>
+                            <p className="font-bold text-slate-900">{currentUser.name}</p>
+                            <p className="text-slate-500 capitalize">{currentUser.role}</p>
                         </div>
                     </div>
                     <button
@@ -189,10 +190,31 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                     <div className="flex items-center gap-2">
                         {activeTab === 'prizes' && (
                             <>
-                                <button className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">Discard</button>
-                                <button className="px-3 sm:px-4 py-2 text-sm font-bold bg-gold-400 hover:bg-gold-500 text-white rounded-lg shadow-sm">
-                                    <span className="hidden sm:inline">Publish Live</span>
-                                    <span className="sm:hidden">Publish</span>
+                                <button
+                                    onClick={() => actions.loadPrizes()}
+                                    className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg"
+                                >
+                                    Discard
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!state.poolId) return;
+                                        if (confirm('Are you sure you want to publish the current configuration live?')) {
+                                            setSaving(true);
+                                            const res = await actions.publishPool(state.poolId);
+                                            setSaving(false);
+                                            if (res.success) {
+                                                alert('Successfully published!');
+                                            } else {
+                                                alert('Failed to publish: ' + res.message);
+                                            }
+                                        }
+                                    }}
+                                    disabled={saving || !state.poolId}
+                                    className="px-3 sm:px-4 py-2 text-sm font-bold bg-gold-400 hover:bg-gold-500 text-white rounded-lg shadow-sm disabled:opacity-50"
+                                >
+                                    <span className="hidden sm:inline">{saving ? 'Publishing...' : 'Publish Live'}</span>
+                                    <span className="sm:hidden">{saving ? '...' : 'Publish'}</span>
                                 </button>
                             </>
                         )}
