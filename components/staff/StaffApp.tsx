@@ -21,7 +21,12 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
         const html5QrCode = new Html5Qrcode(scannerId);
         scannerRef.current = html5QrCode;
 
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        // Use responsive qrbox or full scan
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1
+        };
 
         // Start scanning
         html5QrCode.start(
@@ -29,10 +34,14 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
             config,
             (decodedText) => {
                 // Success
+                // alert("Debug: Scanned Code: " + decodedText); // Uncomment if needed, but let's persist through
                 if (scannerRef.current?.isScanning) {
                     scannerRef.current.stop().then(() => {
                         onScan(decodedText);
-                    }).catch(console.error);
+                    }).catch(err => {
+                        console.error("Stop failed", err);
+                        onScan(decodedText); // Force callback anyway
+                    });
                 } else {
                     onScan(decodedText);
                 }
@@ -42,7 +51,8 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
             }
         ).catch(err => {
             console.error("Camera error", err);
-            setError("Camera access denied or unavailable.");
+            alert("Camera Error: " + err);
+            setError("Camera access denied or unavailable: " + err);
         });
 
         // Cleanup
