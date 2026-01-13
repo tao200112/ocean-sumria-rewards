@@ -329,7 +329,7 @@ const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
                 <ul className="space-y-3 text-sm text-slate-400">
                     <li className="flex items-start gap-2">
                         <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
-                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">$1</strong> spent at Ocean Sumria</span>
+                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">1 cent</strong> spent at Ocean Sumria</span>
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
