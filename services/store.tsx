@@ -25,11 +25,13 @@ interface AppContextType {
     convertPointsToSpins: (customerId: string, spinsToBuy: number) => Promise<{ success: boolean; message: string }>;
     spinWheel: (customerId: string) => Promise<SpinResult>;
     redeemCoupon: (staffId: string, code: string) => Promise<boolean>;
+    findUser: (publicId: string) => Promise<{ success: boolean; user?: User; message?: string }>;
     clearNewRewardFlag: () => void;
     // System Actions
     setUser: (user: User | null) => void;
     setLoading: (loading: boolean) => void;
     setLogs: (logs: ActivityLog[]) => void;
+    loadLogs: () => Promise<void>;
     // Prize Management
     loadPrizes: () => Promise<void>;
     updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -247,10 +249,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       return success;
     },
+    findUser: async (publicId: string) => {
+      const result = await api.findUser(publicId);
+      if (result.success && result.user) {
+        // Map RPC result to User type
+        const raw = result.user;
+        const mappedUser: User = {
+          id: raw.id,
+          email: raw.email,
+          name: raw.name || raw.email,
+          role: raw.role,
+          publicId: raw.public_id,
+          points: raw.points,
+          spins: raw.spins,
+          // Generate avatar if missing
+          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(raw.name || raw.email)}&background=random`,
+          joinedDate: new Date().toLocaleDateString() // RPC doesn't return created_at in profile object currently, or does it? 
+          // RPC rpc_staff_find_user_by_public_id doesn't return created_at in the nested profile object, only id, public_id, name, email, role, points, spins.
+        };
+        return { success: true, user: mappedUser };
+      }
+      return { success: false, message: result.message || 'User not found' };
+    },
     clearNewRewardFlag: () => dispatch({ type: 'CLEAR_NEW_REWARD_FLAG' }),
     setUser: (user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
     setLoading: (loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }),
     setLogs: (logs: ActivityLog[]) => dispatch({ type: 'SET_LOGS', payload: logs }),
+    loadLogs: async () => {
+      const result = await api.fetchActivityLogs();
+      if (result.success) {
+        dispatch({ type: 'SET_LOGS', payload: result.logs });
+      }
+    },
 
     // Prize Management
     loadPrizes: async () => {

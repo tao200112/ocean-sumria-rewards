@@ -102,9 +102,8 @@ function AppRouter() {
             actions.grantSpinsByPublicId(state.currentUser!.id, id, amt);
             return { success: true, message: "Processing transaction..." };
           }}
-          onRedeemCoupon={(code) => {
-            actions.redeemCoupon(state.currentUser!.id, code);
-            return true; // Optimistic
+          onRedeemCoupon={async (code) => {
+            return await actions.redeemCoupon(state.currentUser!.id, code);
           }}
         />
       );

@@ -6,7 +6,7 @@ import { supabase } from '../../services/supabase';
 interface StaffProps {
     user: User;
     onGrantSpins: (customerId: string, billAmount: number) => { success: boolean; message: string };
-    onRedeemCoupon: (code: string) => boolean;
+    onRedeemCoupon: (code: string) => Promise<boolean>;
 }
 
 // --- Internal Component: QR Scanner Modal ---
@@ -130,31 +130,14 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
         actions.setLoading(true);
         try {
             const searchTerm = lookupId.trim().toUpperCase();
-            // Use API directly (bypass legacy store cache mock)
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('public_id', searchTerm)
-                .single();
+            const result = await actions.findUser(searchTerm);
 
-            if (data) {
-                // Normalize for display
-                const customer: User = {
-                    id: data.id,
-                    publicId: data.public_id,
-                    name: data.name || data.email,
-                    email: data.email,
-                    role: normalizeRole(data.role),
-                    avatarUrl: `https://ui-avatars.com/api/?name=${data.email}&background=random`,
-                    points: data.points,
-                    spins: data.spins,
-                    joinedDate: new Date(data.created_at).toLocaleDateString()
-                };
-                setLoadedUser(customer);
+            if (result.success && result.user) {
+                setLoadedUser(result.user);
                 setLastAction(null);
             } else {
                 setLoadedUser(null);
-                setLastAction({ msg: 'Customer not found', type: 'error' });
+                setLastAction({ msg: result.message || 'Customer not found', type: 'error' });
             }
         } catch (e) {
             console.error('Lookup failed', e);
@@ -190,11 +173,11 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
         actions.setLoading(false);
     };
 
-    const handleRedeem = () => {
+    const handleRedeem = async () => {
         if (!couponCode) return;
         const confirm = window.confirm(`Irreversibly redeem coupon ${couponCode}?`);
         if (confirm) {
-            const success = onRedeemCoupon(couponCode);
+            const success = await onRedeemCoupon(couponCode);
             if (success) {
                 setLastAction({ msg: `Redeemed coupon ${couponCode}`, type: 'success' });
                 setCouponCode('');

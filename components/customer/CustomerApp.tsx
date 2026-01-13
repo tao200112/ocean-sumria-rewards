@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { User, Reward, SpinResult, PrizeConfig } from '../../types';
 import { useAppStore } from '../../services/store';
 import { supabase } from '../../services/supabase';
@@ -251,6 +252,18 @@ const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
                 </div>
             </div>
 
+            {/* User ID Card */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-6 flex items-center gap-4 border border-white/5">
+                <div className="bg-white p-2 rounded-lg shadow-lg">
+                    <QRCodeSVG value={state.currentUser?.publicId || 'UNKNOWN'} size={64} level="H" />
+                </div>
+                <div>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">My Member ID</p>
+                    <p className="text-gold-400 text-xl font-black font-mono tracking-widest">{state.currentUser?.publicId || '-----'}</p>
+                    <p className="text-slate-500 text-[10px] mt-0.5">Show to staff to earn points</p>
+                </div>
+            </div>
+
             {/* Mini Wheel Preview & Spin Button */}
             <div className="bg-ocean-800 rounded-3xl p-6 border border-gold-400/30 shadow-[0_0_25px_rgba(242,166,13,0.15)] mb-6">
                 <div className="flex items-center gap-4 mb-4">
@@ -411,7 +424,7 @@ const RewardsView = ({ rewards, points }: { rewards: Reward[]; points: number })
                             <h3 className="text-xl font-bold text-white mb-1">{selectedReward.title}</h3>
                             <p className="text-slate-400 text-xs mb-6">Show this code to server</p>
                             <div className="bg-white p-4 rounded-xl mb-4 inline-block">
-                                <span className="material-symbols-outlined text-8xl text-black">qr_code_2</span>
+                                <QRCodeSVG value={selectedReward.code} size={128} level="H" />
                             </div>
                             <p className="text-2xl font-mono font-bold text-white tracking-widest mb-6">{selectedReward.code}</p>
                         </div>
@@ -451,7 +464,7 @@ const ProfileView = ({ user }: { user: User }) => {
             <div className="bg-white rounded-xl p-6 mb-8 text-ocean-950 shadow-lg text-center relative overflow-hidden group">
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">My Member ID</p>
                 <div className="bg-white p-2 rounded-xl inline-block mx-auto border-4 border-ocean-950 mb-2">
-                    <span className="material-symbols-outlined text-9xl text-ocean-950">qr_code_2</span>
+                    <QRCodeSVG value={user.publicId || 'UNKNOWN'} size={128} level="H" />
                 </div>
                 <p className="text-4xl font-mono font-black tracking-wider text-ocean-900">{user.publicId}</p>
                 <p className="text-[10px] font-medium mt-2 text-slate-500">Show to staff to earn points</p>

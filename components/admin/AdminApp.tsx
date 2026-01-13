@@ -9,7 +9,7 @@ interface AdminProps {
     rewards: Reward[];
 }
 
-export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, logs, rewards }) => {
+export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, logs: initialLogs, rewards }) => {
     const { state, actions } = useAppStore();
     const [activeTab, setActiveTab] = useState<'dashboard' | 'prizes' | 'logs'>('dashboard');
     const [activeLogType, setActiveLogType] = useState<'SPIN' | 'REDEMPTION' | 'EARN_POINTS'>('SPIN');
@@ -22,8 +22,9 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
     const [newPrizeDisplayWeight, setNewPrizeDisplayWeight] = useState(10);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    // Use prizes from store (which should be loaded from DB) or fallback to props
+    // Use data from store (which should be loaded from DB) or fallback to props
     const prizes = state.prizes.length > 0 ? state.prizes : initialPrizes;
+    const logs = state.logs.length > 0 ? state.logs : initialLogs;
 
     // Handle logout
     const handleLogout = async () => {
@@ -31,28 +32,33 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
         window.location.href = '/';
     };
 
-    // Load prizes from database on mount
+    // Load data from database on mount
     useEffect(() => {
         actions.loadPrizes();
+        actions.loadLogs();
+        // Set up real-time polling (every 30s)
+        const interval = setInterval(() => {
+            actions.loadLogs();
+        }, 30000);
+        return () => clearInterval(interval);
     }, []);
-    // --- KPI Calculations (Simple "All Time" for Mock) ---
-    const pointsEarned = logs.filter(l => l.action === 'EARN_POINTS').reduce((acc, l) => {
-        const match = l.details.match(/Earned (\d+)/);
-        return acc + (match ? parseInt(match[1]) : 0);
-    }, 0);
 
-    const pointsConverted = logs.filter(l => l.action === 'CONVERT_POINTS').reduce((acc, l) => {
-        const match = l.details.match(/Converted (\d+)/);
-        return acc + (match ? parseInt(match[1]) : 0);
-    }, 0);
+    // --- KPI Calculations (Based on real logs) ---
+    const pointsEarned = logs
+        .filter(l => l.action === 'EARN_POINTS')
+        .reduce((acc, l) => acc + (l.deltaPoints || 0), 0);
+
+    const pointsConverted = logs
+        .filter(l => l.action === 'CONVERT_POINTS')
+        .reduce((acc, l) => acc + Math.abs(l.deltaPoints || 0), 0);
 
     const spinsUsed = logs.filter(l => l.action === 'SPIN').length;
-    const couponsRedeemed = rewards.filter(r => r.isUsed).length;
+    const redemptions = logs.filter(l => l.action === 'REDEMPTION').length;
 
     // Find top prize (most common title in logs)
     const prizeCounts: Record<string, number> = {};
-    logs.filter(l => l.action === 'SPIN').forEach(l => {
-        const title = l.details.replace('Result: ', '');
+    logs.filter(l => l.action === 'SPIN' && l.details.startsWith('Won')).forEach(l => {
+        const title = l.details.replace('Won ', '');
         prizeCounts[title] = (prizeCounts[title] || 0) + 1;
     });
     const topPrize = Object.entries(prizeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
@@ -220,7 +226,7 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                     <p className="text-slate-500 text-sm font-bold uppercase">Redemptions</p>
-                                    <p className="text-3xl font-black text-slate-900 mt-2">{couponsRedeemed}</p>
+                                    <p className="text-3xl font-black text-slate-900 mt-2">{redemptions}</p>
                                 </div>
                             </div>
 

@@ -60,6 +60,9 @@ export interface ActivityLog {
   action: 'SPIN' | 'REDEMPTION' | 'GRANT' | 'EARN_POINTS' | 'CONVERT_POINTS';
   details: string; // "Won 10% Off" or "Granted 3 spins"
   probabilityTier?: string;
+  deltaPoints?: number;
+  deltaSpins?: number;
+  metadata?: any;
 }
 
 export interface SpinResult {

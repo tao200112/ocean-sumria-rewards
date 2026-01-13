@@ -125,17 +125,45 @@ export const api = {
    * Staff: Add Points to Customer
    * POST /api/staff/add-points
    */
+  /**
+   * Staff: Add Points to Customer (via RPC)
+   */
   addPoints: async (staffId: string, customerPublicId: string, billAmount: number) => {
     try {
-      const res = await fetch('/api/staff/add-points', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicId: customerPublicId, billAmountCents: Math.round(billAmount * 100), receiptRef: `REF-${Date.now()}` })
+      const cents = Math.round(billAmount * 100);
+      const { data, error } = await supabase.rpc('rpc_staff_add_points', {
+        p_public_id: customerPublicId,
+        p_usd_cents: cents,
+        p_note: 'Added via Staff App'
       });
-      const json = await res.json();
-      if (!res.ok) return { success: false, message: json.error };
 
-      return { success: true, message: `Added points successfully`, pointsAdded: json.data.new_points };
+      if (error) return { success: false, message: error.message };
+      if (data?.status === 'error') return { success: false, message: data.message };
+
+      return {
+        success: true,
+        message: `Added points successfully`,
+        pointsAdded: data.points_added,
+        newPoints: data.new_points
+      };
+    } catch (e) {
+      return { success: false, message: (e as Error).message };
+    }
+  },
+
+  /**
+   * Staff: Find User (via RPC)
+   */
+  findUser: async (publicId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('rpc_staff_find_user_by_public_id', {
+        p_public_id: publicId
+      });
+
+      if (error) return { success: false, message: error.message };
+      if (!data?.found) return { success: false, message: 'Customer not found' };
+
+      return { success: true, user: data.profile };
     } catch (e) {
       return { success: false, message: (e as Error).message };
     }
@@ -228,15 +256,26 @@ export const api = {
    * Staff: Redeem Coupon
    * POST /api/staff/redeem
    */
+  /**
+   * Staff: Redeem Coupon (via RPC)
+   */
   redeemCoupon: async (staffId: string, code: string) => {
     try {
-      const res = await fetch('/api/staff/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+      const { data, error } = await supabase.rpc('rpc_staff_redeem_coupon', {
+        p_code: code
       });
-      const json = await res.json();
-      return json.ok;
+
+      if (error) {
+        console.error('Redeem RPC error:', error);
+        return false;
+      }
+
+      if (!data?.success) {
+        console.error('Redeem failed:', data?.message);
+        return false;
+      }
+
+      return true;
     } catch (e) {
       console.error(e);
       return false;
@@ -374,6 +413,24 @@ export const api = {
       return { success: true };
     } catch (e) {
       return { success: false, error: (e as Error).message };
+    }
+  },
+
+  /**
+   * Fetch activity logs
+   */
+  fetchActivityLogs: async () => {
+    try {
+      const res = await fetch('/api/admin/logs');
+      const json = await res.json();
+      if (!res.ok) {
+        console.error('[API] fetchActivityLogs error:', json.error);
+        return { success: false, logs: [], error: json.error };
+      }
+      return { success: true, logs: json.logs };
+    } catch (e) {
+      console.error('[API] fetchActivityLogs exception:', e);
+      return { success: false, logs: [], error: (e as Error).message };
     }
   }
 };
