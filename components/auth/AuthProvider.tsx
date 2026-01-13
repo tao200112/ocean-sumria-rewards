@@ -92,7 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('[Auth] Profile load timeout - unlocking UI');
             setLoading(false);
             actions.setLoading(false);
-        }, 10000);
+            alert("Failed to load profile (Database Timeout). Please close the app, Run the '09_fix_500_error.sql' script in Supabase, and try again.");
+        }, 12000);
 
         try {
             // Step 1: Ensure profile exists (creates if missing - handles OAuth edge case)
