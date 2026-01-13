@@ -112,6 +112,7 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
 
 export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCoupon }) => {
     const { state, actions } = useAppStore(); // Access store directly for lookup logic
+    const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'loyalty' | 'redeem'>('loyalty');
 
     // Loyalty Tab State
@@ -134,7 +135,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
 
         if (!searchTerm) return;
 
-        actions.setLoading(true);
+        setIsLoading(true);
         setIsUnauthorized(false);
         try {
             console.log('[Debug] Calling findUser with:', searchTerm);
@@ -162,7 +163,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
             setLoadedUser(null);
             setLastAction({ msg: 'Lookup failed', type: 'error' });
         } finally {
-            actions.setLoading(false);
+            setIsLoading(false);
         }
     };
 
