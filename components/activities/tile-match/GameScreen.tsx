@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tile, TileMatchState, GameHistory } from '../../../../types/tile-match';
-import { calculateVisibility } from '../../../../lib/tile-match/game-logic';
+import { Tile, TileMatchState, GameHistory } from '../../../types/tile-match';
+import { calculateVisibility } from '../../../lib/tile-match/game-logic';
 import { TileRenderer } from './TileRenderer';
 import { useRouter } from 'next/navigation';
 

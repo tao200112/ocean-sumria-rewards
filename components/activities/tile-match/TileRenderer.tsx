@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Tile } from '../../../../types/tile-match';
+import { Tile } from '../../../types/tile-match';
 
 // Map tile types to icon names or emojis if images are missing
 const FALLBACK_ICONS: Record<string, string> = {

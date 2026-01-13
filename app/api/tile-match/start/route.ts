@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { generateLevel } from '../../../../../lib/tile-match/game-logic';
+import { generateLevel } from '../../../../lib/tile-match/game-logic';
 
 // Standard pattern for creating a client in API routes
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
