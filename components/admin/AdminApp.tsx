@@ -19,9 +19,16 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
     const [addingPrize, setAddingPrize] = useState(false);
     const [newPrizeName, setNewPrizeName] = useState('');
     const [newPrizeWeight, setNewPrizeWeight] = useState(10);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Use prizes from store (which should be loaded from DB) or fallback to props
     const prizes = state.prizes.length > 0 ? state.prizes : initialPrizes;
+
+    // Handle logout
+    const handleLogout = async () => {
+        await actions.logout();
+        window.location.href = '/';
+    };
 
     // Load prizes from database on mount
     useEffect(() => {
@@ -92,61 +99,103 @@ export const AdminApp: React.FC<AdminProps> = ({ user, prizes: initialPrizes, lo
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col">
-                <div className="p-6 flex items-center gap-3">
-                    <div className="size-8 bg-gold-400 rounded-lg flex items-center justify-center text-white font-bold">OS</div>
-                    <span className="font-bold text-slate-800">Admin Console</span>
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar - Desktop & Mobile */}
+            <aside className={`
+                fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-slate-200 flex flex-col z-50
+                transform transition-transform duration-300 ease-in-out
+                ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            `}>
+                <div className="p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 bg-gold-400 rounded-lg flex items-center justify-center text-white font-bold">OS</div>
+                        <span className="font-bold text-slate-800">Admin Console</span>
+                    </div>
+                    <button
+                        className="lg:hidden text-slate-400 hover:text-slate-600"
+                        onClick={() => setMobileMenuOpen(false)}
+                    >
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
                 </div>
                 <nav className="flex-1 px-4 py-4 space-y-1">
                     <button
-                        onClick={() => setActiveTab('dashboard')}
+                        onClick={() => { setActiveTab('dashboard'); setMobileMenuOpen(false); }}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                         <span className="material-symbols-outlined">dashboard</span>
                         Dashboard
                     </button>
                     <button
-                        onClick={() => setActiveTab('prizes')}
+                        onClick={() => { setActiveTab('prizes'); setMobileMenuOpen(false); }}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'prizes' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                         <span className="material-symbols-outlined">redeem</span>
                         Prize Config
                     </button>
                     <button
-                        onClick={() => setActiveTab('logs')}
+                        onClick={() => { setActiveTab('logs'); setMobileMenuOpen(false); }}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'logs' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                         <span className="material-symbols-outlined">description</span>
                         Activity Logs
                     </button>
                 </nav>
-                <div className="p-4 border-t border-slate-200">
+                <div className="p-4 border-t border-slate-200 space-y-3">
                     <div className="flex items-center gap-3">
-                        <img src={user.avatarUrl} className="size-8 rounded-full" alt="Admin" />
-                        <div className="text-xs">
+                        <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=f59e0b&color=fff`} className="size-8 rounded-full" alt="Admin" />
+                        <div className="text-xs flex-1">
                             <p className="font-bold text-slate-900">{user.name}</p>
-                            <p className="text-slate-500">Manager</p>
+                            <p className="text-slate-500 capitalize">{user.role}</p>
                         </div>
                     </div>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        Log Out
+                    </button>
                 </div>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-screen overflow-hidden">
-                {/* Mobile Header */}
-                <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 lg:px-8 shrink-0">
-                    <h1 className="text-xl font-bold flex items-center gap-2">
-                        <span className="lg:hidden material-symbols-outlined">menu</span>
-                        <span className="uppercase">{activeTab}</span>
-                    </h1>
-                    <div className="flex gap-2">
+                {/* Header */}
+                <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 lg:px-8 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <button
+                            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
+                            onClick={() => setMobileMenuOpen(true)}
+                        >
+                            <span className="material-symbols-outlined">menu</span>
+                        </button>
+                        <h1 className="text-lg lg:text-xl font-bold uppercase">{activeTab}</h1>
+                    </div>
+                    <div className="flex items-center gap-2">
                         {activeTab === 'prizes' && (
                             <>
-                                <button className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">Discard</button>
-                                <button className="px-4 py-2 text-sm font-bold bg-gold-400 hover:bg-gold-500 text-white rounded-lg shadow-sm">Publish Live</button>
+                                <button className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">Discard</button>
+                                <button className="px-3 sm:px-4 py-2 text-sm font-bold bg-gold-400 hover:bg-gold-500 text-white rounded-lg shadow-sm">
+                                    <span className="hidden sm:inline">Publish Live</span>
+                                    <span className="sm:hidden">Publish</span>
+                                </button>
                             </>
                         )}
+                        {/* Mobile Logout Button */}
+                        <button
+                            onClick={handleLogout}
+                            className="lg:hidden p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                            <span className="material-symbols-outlined">logout</span>
+                        </button>
                     </div>
                 </header>
 
