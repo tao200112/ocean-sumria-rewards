@@ -16,7 +16,7 @@ export async function GET() {
         .eq('id', user.id)
         .single();
 
-    if (!profile || !['admin', 'manager'].includes(profile.role)) {
+    if (!profile || !['admin', 'manager'].includes(profile.role.toLowerCase())) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

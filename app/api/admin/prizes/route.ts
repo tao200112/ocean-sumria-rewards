@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
-    if (!profile || !['admin', 'manager'].includes(profile.role)) {
+    if (!profile || !['admin', 'manager'].includes(profile.role.toLowerCase())) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
-    if (!profile || !['admin', 'manager'].includes(profile.role)) {
+    if (!profile || !['admin', 'manager'].includes(profile.role.toLowerCase())) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
-    if (!profile || !['admin', 'manager'].includes(profile.role)) {
+    if (!profile || !['admin', 'manager'].includes(profile.role.toLowerCase())) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
