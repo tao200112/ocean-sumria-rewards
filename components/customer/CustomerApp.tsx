@@ -233,40 +233,125 @@ const GameView = ({ spins, onBack, onSpin }: { spins: number; onBack: () => void
 };
 
 // --- View: Home ---
-const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => (
-    <div className="px-6 pt-6 pb-24">
-        <div className="flex justify-between items-end mb-6">
-            <div>
-                <h2 className="text-2xl font-bold text-white">Active <span className="text-gold-400">Events</span></h2>
-                <p className="text-slate-400 text-sm mt-1">Play, dine, and earn rewards</p>
+const HomeView = ({ onPlayGame }: { onPlayGame: () => void }) => {
+    const { state } = useAppStore();
+    const activePrizes = state.prizes.filter(p => p.active);
+
+    // 计算概率
+    const totalWeight = activePrizes.reduce((sum, p) => sum + p.weight, 0);
+    const getProbability = (weight: number) => ((weight / totalWeight) * 100).toFixed(1);
+
+    return (
+        <div className="px-6 pt-6 pb-24">
+            {/* Header */}
+            <div className="flex justify-between items-end mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-white">Lucky <span className="text-gold-400">Wheel</span></h2>
+                    <p className="text-slate-400 text-sm mt-1">Spin to win exclusive prizes</p>
+                </div>
             </div>
-        </div>
-        <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-5 pb-8 -mx-6 px-6">
-            <div className="relative flex-none w-[85%] snap-center rounded-3xl overflow-hidden aspect-[4/5] bg-ocean-800 border border-gold-400/30 shadow-[0_0_25px_rgba(242,166,13,0.15)] group">
-                <div className="absolute inset-0 p-7 flex flex-col justify-between z-10">
-                    <div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-gold-400 text-ocean-950 uppercase">Daily</span>
-                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-white/10 text-white uppercase border border-white/10">Game</span>
+
+            {/* Mini Wheel Preview & Spin Button */}
+            <div className="bg-ocean-800 rounded-3xl p-6 border border-gold-400/30 shadow-[0_0_25px_rgba(242,166,13,0.15)] mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="relative size-24 flex-shrink-0">
+                        {/* Mini Wheel */}
+                        <div className="w-full h-full rounded-full border-4 border-ocean-700 overflow-hidden"
+                            style={{
+                                background: `conic-gradient(${activePrizes.map((p, i) =>
+                                    `${p.color || '#334155'} ${i * (360 / activePrizes.length)}deg ${(i + 1) * (360 / activePrizes.length)}deg`
+                                ).join(', ')})`
+                            }}
+                        >
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="size-8 rounded-full bg-gold-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-ocean-950 text-lg">stars</span>
+                                </div>
+                            </div>
                         </div>
-                        <h3 className="text-3xl font-bold text-white leading-tight mb-2">Lucky Wheel<br /><span className="text-gold-400 italic">1.0</span></h3>
-                        <p className="text-slate-400 text-sm">Spin for a chance to win exclusive Wagyu upgrades.</p>
                     </div>
-                    <div className="flex flex-col items-center gap-6 mt-auto">
-                        <span className="material-symbols-outlined text-7xl text-gold-400 drop-shadow-[0_0_15px_rgba(242,166,13,0.6)]">cyclone</span>
+                    <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">Daily Spin</h3>
+                        <p className="text-sm text-slate-400 mb-3">{activePrizes.length} prizes available</p>
                         <button
                             onClick={onPlayGame}
-                            className="w-full py-4 bg-gold-400 hover:bg-gold-500 text-ocean-950 font-bold text-lg rounded-xl shadow-lg shadow-gold-400/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-gold-400 hover:bg-gold-500 text-ocean-950 font-bold text-sm rounded-xl shadow-lg shadow-gold-400/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
-                            <span className="material-symbols-outlined">play_circle</span>
+                            <span className="material-symbols-outlined text-lg">play_circle</span>
                             Go Spin
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Prize List with Probabilities */}
+            <div className="bg-ocean-800/50 rounded-2xl p-5 border border-ocean-700 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-gold-400">emoji_events</span>
+                    <h3 className="text-lg font-bold text-white">Prizes & Odds</h3>
+                </div>
+                <div className="space-y-3">
+                    {activePrizes.map(prize => (
+                        <div key={prize.id} className="flex items-center justify-between p-3 bg-ocean-900/50 rounded-xl border border-ocean-700/50">
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className="size-10 rounded-lg flex items-center justify-center"
+                                    style={{ backgroundColor: prize.color + '20', color: prize.color }}
+                                >
+                                    <span className="material-symbols-outlined">{prize.icon}</span>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white text-sm">{prize.name}</p>
+                                    <p className="text-xs text-slate-500">
+                                        {prize.totalAvailable === 'unlimited' ? 'Unlimited' : `${prize.totalAvailable} left`}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <span
+                                    className="text-sm font-bold px-2 py-1 rounded-lg"
+                                    style={{ backgroundColor: prize.color + '20', color: prize.color }}
+                                >
+                                    {getProbability(prize.weight)}%
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Rules Section */}
+            <div className="bg-ocean-800/30 rounded-2xl p-5 border border-ocean-700/50">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-slate-400">info</span>
+                    <h3 className="text-lg font-bold text-white">Rules</h3>
+                </div>
+                <ul className="space-y-3 text-sm text-slate-400">
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Earn <strong className="text-white">1 point</strong> for every <strong className="text-white">$1</strong> spent at Ocean Sumria</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Convert <strong className="text-white">1000 points</strong> into <strong className="text-white">1 Lucky Spin</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Prizes won are added to your <strong className="text-white">Rewards</strong> wallet</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Show your reward code to staff to redeem your prize</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-gold-400 text-base mt-0.5">check_circle</span>
+                        <span>Rewards expire <strong className="text-white">7 days</strong> after winning</span>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // --- View: Rewards ---
 const RewardsView = ({ rewards, points }: { rewards: Reward[]; points: number }) => {
