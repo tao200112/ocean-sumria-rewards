@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import { User, UserRole, ActivityLog, SpinResult, normalizeRole, Reward } from '../types';
-import { MOCK_PRIZES } from './mockData'; // Keeping for fallback or types if needed, but logic is server side now
 
 /**
  * API Facade
@@ -249,6 +248,57 @@ export const api = {
     } catch (e) {
       console.error('[API] spinWheel error:', e);
       return { ok: false, error: (e as Error).message };
+    }
+  },
+
+  /**
+   * Fetch current user's rewards (coupons)
+   */
+  fetchMyRewards: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { success: false, error: 'Not authenticated' };
+
+      const { data, error } = await supabase
+        .from('coupons')
+        .select(`
+          id,
+          code,
+          status,
+          expires_at,
+          created_at,
+          prize:prizes (
+            name,
+            value_description,
+            type,
+            icon,
+            color
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Fetch rewards error:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Map to Reward interface
+      const rewards: Reward[] = data.map((item: any) => ({
+        id: item.id,
+        title: item.prize?.name || 'Unknown Prize',
+        description: item.prize?.value_description || 'Prize Reward',
+        expiryDate: item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'No Expiry',
+        isUsed: item.status === 'redeemed',
+        isNew: false, // Loaded from DB, not "just won"
+        type: item.prize?.type === 'discount' ? 'DISCOUNT' : 'FREE_ITEM',
+        code: item.code,
+        imageUrl: `https://picsum.photos/seed/${item.prize?.name}/300/200` // Placeholder image based on name
+      }));
+
+      return { success: true, rewards };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
     }
   },
 

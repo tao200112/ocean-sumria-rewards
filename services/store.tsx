@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { User, Reward, PrizeConfig, ActivityLog, AppState, UserRole, SpinResult } from '../types';
-import { MOCK_REWARDS, MOCK_PRIZES, MOCK_LOGS } from './mockData';
 import { supabase } from './supabase';
 import { api } from './api';
 
@@ -14,6 +13,7 @@ type Action =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_NEW_REWARD_FLAG' }
   | { type: 'SET_LOGS'; payload: ActivityLog[] }
+  | { type: 'SET_REWARDS'; payload: Reward[] }
   | { type: 'SET_PRIZES'; payload: { prizes: PrizeConfig[]; poolId?: string } };
 
 interface AppContextType {
@@ -32,6 +32,7 @@ interface AppContextType {
     setLoading: (loading: boolean) => void;
     setLogs: (logs: ActivityLog[]) => void;
     loadLogs: () => Promise<void>;
+    loadRewards: () => Promise<void>;
     // Prize Management
     loadPrizes: () => Promise<void>;
     updatePrize: (prize: { id: string; name?: string; weight?: number; displayWeight?: number; active?: boolean; icon?: string; color?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -45,9 +46,9 @@ const initialState: AppState & { isLoading: boolean; poolId?: string } = {
   currentUser: null,
   activeRole: UserRole.UNKNOWN, // Start unknown
   users: {}, // Only used for lookup cache in this version
-  rewards: MOCK_REWARDS,
-  logs: MOCK_LOGS,
-  prizes: MOCK_PRIZES,
+  rewards: [],
+  logs: [],
+  prizes: [],
   lastCreatedRewardId: null,
   isLoading: true,
   poolId: undefined,
@@ -103,6 +104,9 @@ const appReducer = (state: AppState & { isLoading: boolean; poolId?: string }, a
 
     case 'SET_LOGS':
       return { ...state, logs: action.payload };
+
+    case 'SET_REWARDS':
+      return { ...state, rewards: action.payload };
 
     case 'SET_PRIZES':
       // Convert database prizes to PrizeConfig format
@@ -279,6 +283,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const result = await api.fetchActivityLogs();
       if (result.success) {
         dispatch({ type: 'SET_LOGS', payload: result.logs });
+      }
+    },
+    loadRewards: async () => {
+      const result = await api.fetchMyRewards();
+      if (result.success && result.rewards) {
+        dispatch({ type: 'SET_REWARDS', payload: result.rewards });
       }
     },
 

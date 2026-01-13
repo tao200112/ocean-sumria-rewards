@@ -548,6 +548,13 @@ const ProfileView = ({ user }: { user: User }) => {
 
 
 export const CustomerApp: React.FC<CustomerProps> = ({ user, rewards, onNavigate, currentView, onSpin }) => {
+    const { actions } = useAppStore();
+
+    useEffect(() => {
+        actions.loadPrizes();
+        actions.loadRewards();
+    }, []);
+
     return (
         <div className="min-h-screen bg-ocean-950 font-sans text-slate-200 relative max-w-md mx-auto shadow-2xl overflow-hidden">
             {/* Header */}

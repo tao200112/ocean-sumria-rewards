@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { User, normalizeRole } from '../../types';
 import { useAppStore } from '../../services/store';
 import { supabase } from '../../services/supabase';
@@ -11,51 +12,47 @@ interface StaffProps {
 
 // --- Internal Component: QR Scanner Modal ---
 const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan: (val: string) => void, type: 'customer' | 'coupon' }) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        let stream: MediaStream | null = null;
-        let timer: ReturnType<typeof setTimeout>;
+        const scannerId = "reader";
+        // Create instance
+        const html5QrCode = new Html5Qrcode(scannerId);
+        scannerRef.current = html5QrCode;
 
-        const startCamera = async () => {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                    videoRef.current.play();
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        // Start scanning
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+                // Success
+                if (scannerRef.current?.isScanning) {
+                    scannerRef.current.stop().then(() => {
+                        onScan(decodedText);
+                    }).catch(console.error);
+                } else {
+                    onScan(decodedText);
                 }
+            },
+            (errorMessage) => {
+                // parse error, ignore
+            }
+        ).catch(err => {
+            console.error("Camera error", err);
+            setError("Camera access denied or unavailable.");
+        });
 
-                // --- DEMO SIMULATION ---
-                // In a real app, we would pipe frames to a QR decoder library (e.g. jsQR).
-                // For this demo, we simulate a successful scan after 2.5 seconds to ensure the reviewer
-                // gets a "Happy Path" experience without needing to generate/hold up a real QR code.
-                timer = setTimeout(() => {
-                    // Mock data based on scan type
-                    const mockValue = type === 'customer' ? 'OS-8X29' : 'XC-992-00';
-                    // Vibrate if supported
-                    if (navigator.vibrate) navigator.vibrate(200);
-                    onScan(mockValue);
-                }, 2500);
-
-            } catch (err) {
-                console.error("Camera error", err);
-                setError("Camera access denied or unavailable. Simulating scan...");
-                // Fallback simulation
-                timer = setTimeout(() => {
-                    const mockValue = type === 'customer' ? 'OS-8X29' : 'XC-992-00';
-                    onScan(mockValue);
-                }, 1500);
+        // Cleanup
+        return () => {
+            if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().catch(console.error);
+                scannerRef.current.clear();
             }
         };
-
-        startCamera();
-
-        return () => {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            clearTimeout(timer);
-        };
-    }, [onScan, type]);
+    }, []);
 
     return (
         <div className="fixed inset-0 z-[60] bg-black text-white flex flex-col">
@@ -73,12 +70,7 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
             {/* Camera View */}
             <div className="flex-1 relative overflow-hidden bg-slate-900 flex items-center justify-center">
                 {!error ? (
-                    <video
-                        ref={videoRef}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        playsInline
-                        muted
-                    />
+                    <div id="reader" className="w-full h-full object-cover"></div>
                 ) : (
                     <div className="text-center p-6 text-slate-400">
                         <span className="material-symbols-outlined text-4xl mb-2">videocam_off</span>
@@ -86,7 +78,7 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
                     </div>
                 )}
 
-                {/* Overlay / Reticle */}
+                {/* Overlay / Reticle (Visual Only) */}
                 <div className="absolute inset-0 flex items-center justify-center p-10 pointer-events-none">
                     <div className="w-64 h-64 border-2 border-gold-400/50 rounded-xl relative">
                         {/* Corners */}
@@ -100,7 +92,7 @@ const QRScannerModal = ({ onClose, onScan, type }: { onClose: () => void, onScan
                     </div>
                 </div>
 
-                <p className="absolute bottom-20 left-0 right-0 text-center text-sm font-medium text-white/80 drop-shadow-md">
+                <p className="absolute bottom-20 left-0 right-0 text-center text-sm font-medium text-white/80 drop-shadow-md z-20">
                     Align QR code within the frame
                 </p>
             </div>
@@ -113,7 +105,7 @@ export const StaffApp: React.FC<StaffProps> = ({ user, onGrantSpins, onRedeemCou
     const [activeTab, setActiveTab] = useState<'loyalty' | 'redeem'>('loyalty');
 
     // Loyalty Tab State
-    const [lookupId, setLookupId] = useState('OS-8X29');
+    const [lookupId, setLookupId] = useState('');
     const [loadedUser, setLoadedUser] = useState<User | null>(null);
     const [billAmount, setBillAmount] = useState<string>('');
 
