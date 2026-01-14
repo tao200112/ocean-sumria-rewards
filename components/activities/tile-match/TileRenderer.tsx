@@ -53,9 +53,9 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
         }
     }, [tile.x, tile.y, tile.z, tile.isClickable, slotIndex]);
 
-    // Image Paths (Sprite Sheets)
+    // Image Paths (Sprite Sheet)
     const spritePath = `/game-assets/sprites/tiles-gen.png`;
-    const uiSpritePath = `/game-assets/sprites/ui-buttons-gen.png`; // 5 items: Undo, Shuffle, Hint, Restart, CardBG
+    // const uiSpritePath = `/game-assets/sprites/ui-buttons-gen.png`; 
 
     // Map type to index
     const TILE_SPRITE_INDEX: Record<string, number> = {
@@ -79,19 +79,12 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
             style={{
                 width: 40,
                 height: 48,
-                ...style
+                ...style // style includes zIndex, left, top, boxshadow etc.
             }}
         >
-            {/* Card Background Layer (From UI Sprite - Index 4) */}
-            <div className="absolute inset-0 z-0 rounded-md overflow-hidden shadow-sm">
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundImage: `url(${uiSpritePath})`,
-                    backgroundSize: '500% 100%', // 5 items horizontal
-                    backgroundPosition: '100% 0%', // The last item (index 4)
-                    backgroundRepeat: 'no-repeat'
-                }}></div>
+            {/* Card Background Layer (Simple White CSS) */}
+            <div className="absolute inset-0 z-0 bg-white rounded-md border-2 border-slate-300 overflow-hidden shadow-sm">
+                {/* Removed generic IMG, using solid white to match tile sprite bg */}
             </div>
 
             {/* Content Layer (Sprite) */}
@@ -104,6 +97,7 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
                         backgroundSize: '400% 300%',
                         backgroundPosition: `${xPos}% ${yPos}%`,
                         backgroundRepeat: 'no-repeat'
+                        // No mix-blend-mode needed if both backgrounds are white
                     }}
                 />
             </div>

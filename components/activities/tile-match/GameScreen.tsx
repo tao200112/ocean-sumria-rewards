@@ -63,11 +63,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
         if (matchedType) {
             // Remove 3 tiles of this type
             setTimeout(() => {
-                const keep: Tile[] = [];
                 let removed = 0;
-                // We keep the order generally but filter out the triplets
-                // Usually matching tiles slide together then pop.
-                // Simple version: Filter out first 3 instances
+                // Filter out first 3 instances
                 const newSlots = slots.filter(t => {
                     if (t.type === matchedType && removed < 3) {
                         removed++;
@@ -77,14 +74,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 });
 
                 setSlots(newSlots);
-                setStatus('playing');
-            }, 300); // Small delay for visual "clink"
+
+                // CRITICAL FIX: Check Win Condition immediately after clearing slots
+                if (newSlots.length === 0 && tiles.every(t => t.isRemoved)) {
+                    setStatus('won');
+                    onFinish('won');
+                } else {
+                    setStatus('playing');
+                }
+            }, 300);
         } else {
-            // Check Lose
+            // Check Lose logic (only if not waiting for timeout)
             if (slots.length >= 7) {
                 setStatus('lost');
                 onFinish('lost');
             } else if (tiles.every(t => t.isRemoved)) {
+                // This covers winning without a final match (rare but possible)
                 setStatus('won');
                 onFinish('won');
             } else {
@@ -149,12 +154,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     const handleHint = () => {
         if (toolCounts.hint >= LIMIT) return;
 
-        // Simple hint: find a clickable tile that matches something in slot
+        // Simple hint
         const clickables = tiles.filter(t => t.isClickable);
 
         let match: Tile | undefined;
 
-        // Priority logic (same as before)
+        // Priority logic
         if (slots.length > 0) {
             const counts: Record<string, number> = {};
             slots.forEach(t => counts[t.type] = (counts[t.type] || 0) + 1);
@@ -179,7 +184,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     const handleRestart = () => {
         if (toolCounts.restart >= LIMIT) return;
         setToolCounts(prev => ({ ...prev, restart: prev.restart + 1 }));
-        window.location.reload(); // Simple reload for now
+        window.location.reload();
     };
 
     return (
@@ -218,12 +223,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
             {/* Slot Tray & Controls */}
             <div className="h-40 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2">
-                {/* Tray Background Image */}
+                {/* Tray Background Image - Updated with proper scaling and blend mode */}
                 <div className="relative w-[340px] h-[60px] flex items-center justify-center mb-2">
-                    <img src="/game-assets/ui/ui-tray-gen.png" className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg" alt="tray"
+                    <img src="/game-assets/ui/ui-tray-gen.png" className="absolute inset-0 w-full h-full object-fill mix-blend-multiply pointer-events-none drop-shadow-lg" alt="tray"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }} />
 
-                    {/* Fallback Tray Styles (only visible if img fails) */}
+                    {/* Fallback Tray Styles */}
                     <div className="absolute inset-0 bg-black/20 rounded-xl border border-white/10 -z-10"></div>
 
                     {/* Slots Layer - Align with generated image */}
@@ -267,7 +272,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
             </div>
 
-            {/* Overlays (Win/Loss) */}
+            {/* Overlays (Win/Loss) - Ensure z-index is highest */}
             {status === 'won' && (
                 <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
                     <div className="relative z-10 text-center p-8 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl">
@@ -293,7 +298,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     );
 };
 
-// Updated ToolBtn to use Sprite Sheet
+// Updated ToolBtn to use Sprite Sheet with Blend Mode
 const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onClick: () => void, disabled: boolean, spriteIndex: number }) => {
     // Sprite calc: 5 items. Positions: 0, 25, 50, 75, 100%
     const xPos = spriteIndex * 25;
@@ -306,7 +311,7 @@ const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onC
         >
             <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative">
                 <div
-                    className="absolute inset-0"
+                    className="absolute inset-0 mix-blend-multiply" // Added blend mode to remove white bg
                     style={{
                         backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
                         backgroundSize: '500% 100%',
