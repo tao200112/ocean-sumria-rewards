@@ -92,87 +92,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('[Auth] Profile load timeout - unlocking UI');
             setLoading(false);
             actions.setLoading(false);
-            alert("Failed to load profile (Database Timeout). Please close the app, Run the '09_fix_500_error.sql' script in Supabase, and try again.");
-        }, 12000);
+            alert("Profile load timeout. Please refresh the page or contact support.");
+        }, 10000);
 
         try {
-            // Step 1: Ensure profile exists (creates if missing - handles OAuth edge case)
-            console.log('[Auth] Calling rpc_ensure_profile to create profile if needed...');
-            const { data: ensureData, error: ensureError } = await supabase.rpc('rpc_ensure_profile');
-
-            if (ensureError) {
-                console.error('[Auth] rpc_ensure_profile error:', ensureError.message);
-            } else if (ensureData?.created) {
-                console.log('[Auth] New profile created via rpc_ensure_profile');
-            } else if (ensureData?.error) {
-                // 显示完整错误信息用于调试
-                console.error('[Auth] rpc_ensure_profile returned error:', ensureData.error, 'Details:', JSON.stringify(ensureData));
-            } else {
-                console.log('[Auth] Profile already exists');
-            }
-
-            // Step 2: Fetch the profile
-            console.log('[Auth] Calling rpc_get_my_profile...');
-            const { data: rpcData, error: rpcError } = await supabase.rpc('rpc_get_my_profile');
+            // 方案：直接查询 profiles 表（绕过 RPC）
+            console.log('[Auth] Querying profiles table directly...');
+            const { data: profileData, error: queryError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
 
             clearTimeout(timeout);
-            console.log('[Auth] RPC result:', { data: rpcData, error: rpcError });
 
-            if (rpcError) {
-                console.error('[Auth] RPC error:', rpcError.message);
-                // Try direct query as fallback
-                console.log('[Auth] Trying direct query...');
-                const { data: directData, error: directError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
+            if (queryError && queryError.code !== 'PGRST116') {
+                // PGRST116 = no rows found，这是正常情况
+                console.error('[Auth] Query error:', queryError.message);
+                throw queryError;
+            }
 
-                console.log('[Auth] Direct query result:', { data: directData, error: directError });
-
-                if (directData) {
-                    const profile = {
-                        id: directData.id,
-                        publicId: directData.public_id,
-                        name: directData.name || user.email?.split('@')[0],
-                        email: directData.email || user.email,
-                        role: normalizeRole(directData.role),
-                        avatarUrl: `https://ui-avatars.com/api/?name=${directData.email}&background=random`,
-                        points: directData.points || 0,
-                        spins: directData.spins || 0,
-                        joinedDate: new Date().toLocaleDateString()
-                    };
-                    console.log('[Auth] Profile loaded via direct query:', profile.publicId);
-                    actions.setUser(profile);
-                } else {
-                    console.error('[Auth] No profile found after ensure!');
-                    alert('Unable to create profile. Please try again or contact support.');
-                    await supabase.auth.signOut();
-                    actions.setUser(null);
-                }
-            } else if (rpcData && !rpcData.error) {
+            if (profileData) {
+                // Profile 存在，直接使用
+                console.log('[Auth] Profile found:', profileData.public_id);
                 const profile = {
-                    id: rpcData.id,
-                    publicId: rpcData.public_id,
-                    name: rpcData.name || user.email?.split('@')[0],
-                    email: rpcData.email || user.email,
-                    role: normalizeRole(rpcData.role),
-                    avatarUrl: `https://ui-avatars.com/api/?name=${rpcData.email}&background=random`,
-                    points: rpcData.points || 0,
-                    spins: rpcData.spins || 0,
+                    id: profileData.id,
+                    publicId: profileData.public_id,
+                    name: profileData.name || user.email?.split('@')[0],
+                    email: profileData.email || user.email,
+                    role: normalizeRole(profileData.role),
+                    avatarUrl: `https://ui-avatars.com/api/?name=${profileData.email}&background=random`,
+                    points: profileData.points || 0,
+                    spins: profileData.spins || 0,
                     joinedDate: new Date().toLocaleDateString()
                 };
-                console.log('[Auth] Profile loaded via RPC:', profile.publicId, profile.role);
                 actions.setUser(profile);
             } else {
-                console.error('[Auth] RPC returned error:', rpcData?.error);
-                alert('Profile not found. Please try signing in again.');
-                await supabase.auth.signOut();
-                actions.setUser(null);
+                // Profile 不存在，需要创建
+                console.log('[Auth] Profile not found, calling insert RPC...');
+
+                // 使用新的简化 RPC 函数创建 profile
+                const { data: insertData, error: insertError } = await supabase.rpc('create_profile_simple', {
+                    p_user_id: user.id,
+                    p_email: user.email,
+                    p_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
+                });
+
+                if (insertError) {
+                    console.error('[Auth] Insert error:', insertError.message);
+                    throw insertError;
+                }
+
+                if (insertData && !insertData.error) {
+                    console.log('[Auth] Profile created successfully');
+                    const profile = {
+                        id: insertData.id,
+                        publicId: insertData.public_id,
+                        name: insertData.name,
+                        email: insertData.email,
+                        role: normalizeRole(insertData.role),
+                        avatarUrl: `https://ui-avatars.com/api/?name=${insertData.email}&background=random`,
+                        points: insertData.points || 0,
+                        spins: insertData.spins || 0,
+                        joinedDate: new Date().toLocaleDateString()
+                    };
+                    actions.setUser(profile);
+                } else {
+                    console.error('[Auth] Profile creation failed:', insertData?.error);
+                    throw new Error(insertData?.error || 'Profile creation failed');
+                }
             }
         } catch (e) {
             console.error('[Auth] loadProfile exception:', e);
             clearTimeout(timeout);
+            alert('Unable to load profile. Please try logging in again.');
+            await supabase.auth.signOut();
             actions.setUser(null);
         } finally {
             setLoading(false);
