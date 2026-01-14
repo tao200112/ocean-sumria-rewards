@@ -29,42 +29,34 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
         if (status !== 'playing' || !clickedTile.isClickable) return;
         if (slots.length >= 7) return;
 
-        // Move to slot
         const newSlots = [...slots, clickedTile];
-
-        // Remove from board visually (mark removed)
         const newTiles = tiles.map(t =>
             t.id === clickedTile.id
                 ? { ...t, isRemoved: true, inSlotIndex: -1 }
                 : t
         );
 
-        // Update visibility of others
         const recalculatedTiles = calculateVisibility(newTiles);
 
         setTiles(recalculatedTiles);
         setSlots(newSlots);
         setHistory(prev => [...prev, { action: 'pick', tileId: clickedTile.id, from: { x: clickedTile.x, y: clickedTile.y, z: clickedTile.z } }]);
 
-        // Check Matches
         setStatus('checking');
     };
 
-    // 2. Match Logic (Effect when slots change)
+    // 2. Match Logic
     useEffect(() => {
         if (status !== 'checking') return;
 
-        // Find match of 3
         const counts: Record<string, number> = {};
         slots.forEach(t => { counts[t.type] = (counts[t.type] || 0) + 1; });
 
         const matchedType = Object.keys(counts).find(type => counts[type] >= 3);
 
         if (matchedType) {
-            // Remove 3 tiles of this type
             setTimeout(() => {
                 let removed = 0;
-                // Filter out first 3 instances
                 const newSlots = slots.filter(t => {
                     if (t.type === matchedType && removed < 3) {
                         removed++;
@@ -75,30 +67,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
                 setSlots(newSlots);
 
-                // Check Win Condition
                 if (newSlots.length === 0 && tiles.every(t => t.isRemoved)) {
                     setStatus('won');
-                    onFinish('won');
+                    // Call onFinish but don't wait for it to prevent UI blocking
+                    onFinish('won').catch(err => console.error('Error saving win:', err));
                 } else {
                     setStatus('playing');
                 }
             }, 300);
         } else {
-            // Check Lose logic
             if (slots.length >= 7) {
                 setStatus('lost');
-                onFinish('lost');
+                onFinish('lost').catch(err => console.error('Error saving loss:', err));
             } else if (tiles.every(t => t.isRemoved)) {
                 setStatus('won');
-                onFinish('won');
+                onFinish('won').catch(err => console.error('Error saving win:', err));
             } else {
                 setStatus('playing');
             }
         }
     }, [slots, status, tiles]);
 
-
-    // 3. Tools Limits
+    // 3. Tools
     const [toolCounts, setToolCounts] = useState({ undo: 0, shuffle: 0, hint: 0, restart: 0 });
     const LIMIT = 1;
 
@@ -180,7 +170,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div>
             </div>
 
-            {/* Header / Stats */}
+            {/* Header */}
             <div className="h-12 flex items-center justify-between px-4 bg-ocean-800/40 backdrop-blur-md z-20 border-b border-white/10 shrink-0">
                 <div className="px-3 py-1 bg-black/30 rounded-full border border-white/10">
                     <span className="text-white font-bold text-xs shadow-black drop-shadow-md">Level {level}</span>
@@ -190,7 +180,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
             </div>
 
-            {/* Game Canvas Board */}
+            {/* Game Board */}
             <div className="flex-1 relative overflow-hidden z-10">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[400px]">
                     {tiles.map(tile => (
@@ -206,12 +196,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
             </div>
 
-            {/* Slot Tray & Controls */}
+            {/* Tray & Tools */}
             <div className="h-44 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2 shrink-0">
 
-                {/* CSS Based Tray - Guarantees Alignment */}
+                {/* Tray */}
                 <div className="relative w-[340px] h-16 flex items-center justify-center mb-3 bg-[#eecfa1] rounded-xl shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_-2px_4px_rgba(0,0,0,0.2)] border-b-4 border-[#dbb080]">
-                    {/* Inner Slots Layer */}
                     <div className="flex gap-[4px] relative z-10 justify-center w-full items-center">
                         {Array.from({ length: 7 }).map((_, i) => (
                             <div key={i} className="size-11 flex items-center justify-center relative bg-black/10 rounded-lg shadow-inner border border-black/5">
@@ -229,30 +218,30 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                         label="Undo"
                         onClick={handleUndo}
                         disabled={toolCounts.undo >= LIMIT}
-                        spriteIndex={0}
+                        imagePath="/game-assets/ui/btn-undo.png"
                     />
                     <ToolBtn
                         label="Shuffle"
                         onClick={handleShuffle}
                         disabled={toolCounts.shuffle >= LIMIT}
-                        spriteIndex={1}
+                        imagePath="/game-assets/ui/btn-shuffle.png"
                     />
                     <ToolBtn
                         label="Hint"
                         onClick={handleHint}
                         disabled={toolCounts.hint >= LIMIT}
-                        spriteIndex={2}
+                        imagePath="/game-assets/ui/btn-hint.png"
                     />
                     <ToolBtn
                         label="Reset"
                         onClick={handleRestart}
                         disabled={toolCounts.restart >= LIMIT}
-                        spriteIndex={3}
+                        imagePath="/game-assets/ui/btn-reset.png"
                     />
                 </div>
             </div>
 
-            {/* Overlays (Win/Loss) */}
+            {/* Win/Loss Overlays */}
             {status === 'won' && (
                 <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
                     <div className="relative z-10 text-center p-8 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl">
@@ -278,10 +267,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     );
 };
 
-const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onClick: () => void, disabled: boolean, spriteIndex: number }) => {
-    // Sprite calc: 5 items. 
-    const xPos = spriteIndex * 25;
-
+const ToolBtn = ({ label, onClick, disabled, imagePath }: { label: string, onClick: () => void, disabled: boolean, imagePath: string }) => {
     return (
         <button
             onClick={onClick}
@@ -289,14 +275,10 @@ const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onC
             className={`flex flex-col items-center gap-1 active:scale-95 transition-all shrink-0 ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}`}
         >
             <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative shrink-0">
-                <div
-                    className="absolute inset-0 mix-blend-multiply"
-                    style={{
-                        backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
-                        backgroundSize: '550% auto', // Zoom in to fix sprite bleeding
-                        backgroundPosition: `${xPos}% center`,
-                        backgroundRepeat: 'no-repeat'
-                    }}
+                <img
+                    src={imagePath}
+                    alt={label}
+                    className="absolute inset-0 w-full h-full object-cover mix-blend-multiply"
                 />
             </div>
             <span className="text-[10px] font-black uppercase text-white tracking-wider drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] pb-1">
