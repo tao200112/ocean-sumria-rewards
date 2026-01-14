@@ -96,72 +96,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 10000);
 
         try {
-            // 方案：直接查询 profiles 表（绕过 RPC）
-            console.log('[Auth] Querying profiles table directly...');
-            const { data: profileData, error: queryError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
+            // 使用服务端 API route（绕过 Supabase 客户端问题）
+            console.log('[Auth] Fetching profile from API route...');
+            const response = await fetch('/api/profile');
 
             clearTimeout(timeout);
 
-            if (queryError && queryError.code !== 'PGRST116') {
-                // PGRST116 = no rows found，这是正常情况
-                console.error('[Auth] Query error:', queryError.message);
-                throw queryError;
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('[Auth] API error:', errorData);
+                throw new Error(errorData.error || 'Profile fetch failed');
             }
 
-            if (profileData) {
-                // Profile 存在，直接使用
-                console.log('[Auth] Profile found:', profileData.public_id);
-                const profile = {
-                    id: profileData.id,
-                    publicId: profileData.public_id,
-                    name: profileData.name || user.email?.split('@')[0],
-                    email: profileData.email || user.email,
-                    role: normalizeRole(profileData.role),
-                    avatarUrl: `https://ui-avatars.com/api/?name=${profileData.email}&background=random`,
-                    points: profileData.points || 0,
-                    spins: profileData.spins || 0,
-                    joinedDate: new Date().toLocaleDateString()
-                };
-                actions.setUser(profile);
-            } else {
-                // Profile 不存在，需要创建
-                console.log('[Auth] Profile not found, calling insert RPC...');
+            const profileData = await response.json();
+            console.log('[Auth] Profile data received:', profileData);
 
-                // 使用新的简化 RPC 函数创建 profile
-                const { data: insertData, error: insertError } = await supabase.rpc('create_profile_simple', {
-                    p_user_id: user.id,
-                    p_email: user.email,
-                    p_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
-                });
+            const profile = {
+                id: profileData.id,
+                publicId: profileData.public_id,
+                name: profileData.name || user.email?.split('@')[0],
+                email: profileData.email || user.email,
+                role: normalizeRole(profileData.role),
+                avatarUrl: `https://ui-avatars.com/api/?name=${profileData.email}&background=random`,
+                points: profileData.points || 0,
+                spins: profileData.spins || 0,
+                joinedDate: new Date().toLocaleDateString()
+            };
 
-                if (insertError) {
-                    console.error('[Auth] Insert error:', insertError.message);
-                    throw insertError;
-                }
+            console.log('[Auth] Profile loaded successfully:', profile.publicId);
+            actions.setUser(profile);
 
-                if (insertData && !insertData.error) {
-                    console.log('[Auth] Profile created successfully');
-                    const profile = {
-                        id: insertData.id,
-                        publicId: insertData.public_id,
-                        name: insertData.name,
-                        email: insertData.email,
-                        role: normalizeRole(insertData.role),
-                        avatarUrl: `https://ui-avatars.com/api/?name=${insertData.email}&background=random`,
-                        points: insertData.points || 0,
-                        spins: insertData.spins || 0,
-                        joinedDate: new Date().toLocaleDateString()
-                    };
-                    actions.setUser(profile);
-                } else {
-                    console.error('[Auth] Profile creation failed:', insertData?.error);
-                    throw new Error(insertData?.error || 'Profile creation failed');
-                }
-            }
         } catch (e) {
             console.error('[Auth] loadProfile exception:', e);
             clearTimeout(timeout);
