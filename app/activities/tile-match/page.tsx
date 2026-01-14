@@ -114,27 +114,37 @@ export default function TileMatchPage() {
     };
 
     const handleFinish = async (result: 'won' | 'lost') => {
-        if (!runId || !state.currentUser) return;
+        console.log('[TileMatch] handleFinish called:', { result, runId, userId: state.currentUser?.id });
+
+        if (!runId || !state.currentUser) {
+            console.error('[TileMatch] Missing runId or currentUser:', { runId, currentUser: state.currentUser });
+            return;
+        }
 
         try {
+            console.log('[TileMatch] Calling finish API...');
             const res = await fetch('/api/tile-match/finish', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: state.currentUser.id, runId, result })
             });
             const data = await res.json();
+            console.log('[TileMatch] Finish API response:', data);
 
             if (data.success && result === 'won') {
                 if (data.reward > 0) {
                     // Update points locally
+                    console.log('[TileMatch] Updating points:', { old: state.currentUser.points, new: data.points });
                     actions.setUser({ ...state.currentUser, points: data.points });
-                    // Maybe show confetti or toast
+                    alert(`Congratulations! You earned ${data.reward} points!`);
                 } else if (data.limitReached) {
                     alert('Level complete! Daily reward limit reached for this level.');
                 }
+            } else if (!data.success) {
+                console.error('[TileMatch] Finish failed:', data);
             }
         } catch (e) {
-            console.error('Error submitting result', e);
+            console.error('[TileMatch] Error submitting result:', e);
         }
     };
 
