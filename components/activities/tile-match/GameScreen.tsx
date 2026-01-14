@@ -224,7 +224,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
 
                 {/* Tools */}
-                <div className="flex w-[340px] justify-between px-2">
+                <div className="flex w-[340px] justify-around px-2">
                     <ToolBtn
                         label="Undo"
                         onClick={handleUndo}
@@ -293,7 +293,7 @@ const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onC
                     className="absolute inset-0 mix-blend-multiply"
                     style={{
                         backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
-                        backgroundSize: '500% auto', // Fix aspect ratio (Auto height)
+                        backgroundSize: '550% auto', // Zoom in to fix sprite bleeding
                         backgroundPosition: `${xPos}% center`,
                         backgroundRepeat: 'no-repeat'
                     }}
