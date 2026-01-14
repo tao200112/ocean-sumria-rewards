@@ -182,17 +182,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
         window.location.reload(); // Simple reload for now
     };
 
-
     return (
-        <div className="relative w-full max-w-sm mx-auto h-[600px] bg-ocean-900 rounded-3xl overflow-hidden border border-ocean-800 shadow-2xl flex flex-col">
+        <div className="relative w-full max-w-sm mx-auto h-[600px] overflow-hidden border border-ocean-800 shadow-2xl flex flex-col">
+            {/* Main Background */}
+            <div className="absolute inset-0 z-0">
+                <img src="/game-assets/ui/bg-sunburst.png" className="w-full h-full object-cover" alt="bg" />
+                <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div>
+            </div>
+
             {/* Header / Stats */}
-            <div className="h-12 flex items-center justify-between px-4 bg-ocean-800/80 backdrop-blur z-20">
-                <span className="text-white font-bold text-xs">Level {level}</span>
-                <span className="text-gold-400 font-bold text-xs">{tiles.filter(t => !t.isRemoved).length} Tiles Left</span>
+            <div className="h-12 flex items-center justify-between px-4 bg-ocean-800/40 backdrop-blur-md z-20 border-b border-white/10">
+                <div className="px-3 py-1 bg-black/30 rounded-full border border-white/10">
+                    <span className="text-white font-bold text-xs shadow-black drop-shadow-md">Level {level}</span>
+                </div>
+                <div className="px-3 py-1 bg-black/30 rounded-full border border-white/10">
+                    <span className="text-gold-300 font-bold text-xs shadow-black drop-shadow-md">{tiles.filter(t => !t.isRemoved).length} Left</span>
+                </div>
             </div>
 
             {/* Game Canvas Board */}
-            <div className="flex-1 relative bg-ocean-950/50 overflow-hidden">
+            <div className="flex-1 relative overflow-hidden z-10">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[400px]">
                     {tiles.map(tile => (
                         !tile.isRemoved && (
@@ -208,18 +217,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
             </div>
 
             {/* Slot Tray & Controls */}
-            <div className="h-40 bg-ocean-800 border-t border-ocean-700 relative z-30 flex flex-col items-center justify-end pb-4 pt-2">
+            <div className="h-40 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2">
                 {/* Tray Background Image */}
                 <div className="relative w-[340px] h-[60px] flex items-center justify-center mb-2">
-                    <img src="/game-assets/ui/slot-bg.png" className="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="tray"
+                    <img src="/game-assets/ui/ui-tray-gen.png" className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-lg" alt="tray"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }} />
 
-                    {/* Fallback Tray Styles only if img missing (handled by display none logic or manual check) */}
+                    {/* Fallback Tray Styles (only visible if img fails) */}
                     <div className="absolute inset-0 bg-black/20 rounded-xl border border-white/10 -z-10"></div>
 
-                    {/* Slots Layer - Must align perfectly with background image holes */}
-                    <div className="flex gap-[6px] relative z-10 px-1">
-                        {/* We map fixed 7 slots to ensure alignment */}
+                    {/* Slots Layer - Align with generated image */}
+                    <div className="flex gap-[5px] relative z-10 pl-[8px]">
                         {Array.from({ length: 7 }).map((_, i) => (
                             <div key={i} className="size-10 flex items-center justify-center relative">
                                 {slots[i] && (
@@ -230,60 +238,53 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                     </div>
                 </div>
 
-                {/* Tools */}
-                <div className="flex gap-4 w-full justify-center px-4">
+                {/* Tools - Using Sprite Sheet */}
+                <div className="flex gap-6 w-full justify-center px-4">
                     <ToolBtn
-                        icon="undo" label="Undo"
+                        label="Undo"
                         onClick={handleUndo}
                         disabled={toolCounts.undo >= LIMIT}
-                        imgSrc="/game-assets/ui/btn-undo.png"
-                        color="bg-yellow-500"
+                        spriteIndex={0}
                     />
                     <ToolBtn
-                        icon="shuffle" label="Shuffle"
+                        label="Shuffle"
                         onClick={handleShuffle}
                         disabled={toolCounts.shuffle >= LIMIT}
-                        imgSrc="/game-assets/ui/btn-shuffle.png"
-                        color="bg-blue-500"
+                        spriteIndex={1}
                     />
                     <ToolBtn
-                        icon="lightbulb" label="Hint"
+                        label="Hint"
                         onClick={handleHint}
                         disabled={toolCounts.hint >= LIMIT}
-                        imgSrc="/game-assets/ui/btn-hint.png"
-                        color="bg-yellow-500"
+                        spriteIndex={2}
                     />
                     <ToolBtn
-                        icon="refresh" label="Reset"
+                        label="Reset"
                         onClick={handleRestart}
                         disabled={toolCounts.restart >= LIMIT}
-                        imgSrc="/game-assets/ui/btn-restart.png"
-                        color="bg-red-500"
+                        spriteIndex={3}
                     />
                 </div>
             </div>
 
-            {/* Overlays */}
-            {/* ... (Existing overlays same as before) ... */}
+            {/* Overlays (Win/Loss) */}
             {status === 'won' && (
                 <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
-                    <img src="/game-assets/ui/bg-win.png" className="absolute inset-0 opacity-50 object-cover" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <div className="relative z-10 text-center">
-                        <span className="text-6xl mb-4 block">🎉</span>
-                        <h2 className="text-3xl font-black text-gold-400 mb-2">CLEARED!</h2>
-                        <button onClick={() => window.location.reload()} className="px-6 py-3 bg-gold-400 text-ocean-950 font-bold rounded-xl shadow-lg hover:scale-105 transition-transform">Continue</button>
+                    <div className="relative z-10 text-center p-8 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl">
+                        <span className="text-6xl mb-4 block animate-bounce">🎉</span>
+                        <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-yellow-500 mb-2">CLEARED!</h2>
+                        <button onClick={() => window.location.reload()} className="mt-6 px-8 py-3 bg-gradient-to-r from-gold-400 to-orange-500 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-transform">Continue</button>
                     </div>
                 </div>
             )}
             {status === 'lost' && (
                 <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
-                    <img src="/game-assets/ui/bg-loss.png" className="absolute inset-0 opacity-50 object-cover" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <div className="relative z-10 text-center">
+                    <div className="relative z-10 text-center p-8 bg-black/40 backdrop-blur-xl rounded-3xl border border-red-500/30 shadow-2xl">
                         <span className="text-6xl mb-4 block">💀</span>
                         <h2 className="text-3xl font-black text-red-500 mb-2">GAME OVER</h2>
-                        <div className="flex gap-3 justify-center">
-                            <button onClick={handleUndo} className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg">Revive</button>
-                            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 text-white font-bold rounded-xl">Give Up</button>
+                        <div className="flex gap-4 justify-center mt-6">
+                            <button onClick={handleUndo} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105">Revive Pair</button>
+                            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors">Give Up</button>
                         </div>
                     </div>
                 </div>
@@ -292,25 +293,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     );
 };
 
-const ToolBtn = ({ icon, label, onClick, disabled, imgSrc, color }: any) => (
-    <button
-        onClick={onClick}
-        disabled={disabled}
-        className={`flex flex-col items-center gap-1 active:scale-95 transition-all ${disabled ? 'opacity-50 grayscale' : 'hover:scale-105'}`}
-    >
-        <div className={`size-12 rounded-full flex items-center justify-center shadow-lg border-2 border-white/20 overflow-hidden ${color ? '' : 'bg-ocean-700'}`}>
-            {imgSrc ? (
-                <img src={imgSrc} alt={label} className="w-full h-full object-cover"
-                    onError={(e) => {
-                        // Fallback to Icon
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement!.classList.add(color || 'bg-gray-500');
-                        e.currentTarget.parentElement!.innerHTML = `<span class="material-symbols-outlined text-white text-xl">${icon}</span>`;
+// Updated ToolBtn to use Sprite Sheet
+const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onClick: () => void, disabled: boolean, spriteIndex: number }) => {
+    // Sprite calc: 5 items. Positions: 0, 25, 50, 75, 100%
+    const xPos = spriteIndex * 25;
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`flex flex-col items-center gap-1 active:scale-95 transition-all ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}`}
+        >
+            <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative">
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
+                        backgroundSize: '500% 100%',
+                        backgroundPosition: `${xPos}% 0%`,
+                        backgroundRepeat: 'no-repeat'
                     }}
                 />
-            ) : (
-                <span className="material-symbols-outlined text-white text-xl">{icon}</span>
-            )}
-        </div>
-    </button>
-);
+            </div>
+            {/* Label Shadow */}
+            <span className="text-[10px] font-black uppercase text-white tracking-wider drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+                {label}
+            </span>
+        </button>
+    );
+};

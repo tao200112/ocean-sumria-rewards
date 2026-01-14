@@ -53,9 +53,9 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
         }
     }, [tile.x, tile.y, tile.z, tile.isClickable, slotIndex]);
 
-    // Image Paths (Sprite Sheet)
-    const spritePath = `/game-assets/sprites/tiles.jpg`;
-    const cardBgPath = `/game-assets/ui/card-bg.png`;
+    // Image Paths (Sprite Sheets)
+    const spritePath = `/game-assets/sprites/tiles-gen.png`;
+    const uiSpritePath = `/game-assets/sprites/ui-buttons-gen.png`; // 5 items: Undo, Shuffle, Hint, Restart, CardBG
 
     // Map type to index
     const TILE_SPRITE_INDEX: Record<string, number> = {
@@ -82,14 +82,16 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
                 ...style
             }}
         >
-            {/* Card Background Layer */}
-            <div className="absolute inset-0 z-0 bg-[#f8fafc] rounded-md border-2 border-slate-300 overflow-hidden shadow-sm">
-                <img
-                    src={cardBgPath}
-                    alt=""
-                    className="w-full h-full object-fill"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
+            {/* Card Background Layer (From UI Sprite - Index 4) */}
+            <div className="absolute inset-0 z-0 rounded-md overflow-hidden shadow-sm">
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: `url(${uiSpritePath})`,
+                    backgroundSize: '500% 100%', // 5 items horizontal
+                    backgroundPosition: '100% 0%', // The last item (index 4)
+                    backgroundRepeat: 'no-repeat'
+                }}></div>
             </div>
 
             {/* Content Layer (Sprite) */}
