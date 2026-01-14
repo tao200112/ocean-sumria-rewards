@@ -53,35 +53,63 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
         }
     }, [tile.x, tile.y, tile.z, tile.isClickable, slotIndex]);
 
-    // Image Path
-    // Assuming user put images in public/game-assets/tiles/{type}.png
-    const imgPath = `/game-assets/tiles/${tile.type}.png`;
+    // Image Paths (Sprite Sheet)
+    const spritePath = `/game-assets/sprites/tiles.jpg`;
+    const cardBgPath = `/game-assets/ui/card-bg.png`;
+
+    // Map type to index
+    const TILE_SPRITE_INDEX: Record<string, number> = {
+        'sushi': 0, 'sashimi': 1, 'chicken': 2, 'tempura': 3,
+        'ramen': 4, 'dumplings': 5, 'beer': 6, 'cocktail': 7,
+        'sake': 8, 'soda': 9, 'boba': 10, 'coin': 11
+    };
+
+    // Calculate Sprite Position
+    const idx = TILE_SPRITE_INDEX[tile.type] ?? 0;
+    // 4 Columns, 3 Rows
+    const col = idx % 4;
+    const row = Math.floor(idx / 4);
+    const xPos = col * (100 / 3);
+    const yPos = row * (100 / 2);
 
     return (
         <div
             onClick={() => tile.isClickable && onClick(tile)}
-            className={`absolute rounded-md border-2 overflow-hidden flex items-center justify-center select-none ${slotIndex !== undefined ? 'size-10' : 'size-10'}`}
+            className={`absolute flex items-center justify-center select-none ${slotIndex !== undefined ? 'size-10' : 'size-10'}`}
             style={{
                 width: 40,
                 height: 48,
-                backgroundColor: '#f8fafc',
-                borderColor: '#cbd5e1',
                 ...style
             }}
         >
-            {/* Fallback to emoji if image fails (using simple check or just render both and hide err) */}
-            <img
-                src={imgPath}
-                alt={tile.type}
-                className="w-8 h-8 object-contain pointer-events-none"
-                onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerText = FALLBACK_ICONS[tile.type] || '?';
-                }}
-            />
+            {/* Card Background Layer */}
+            <div className="absolute inset-0 z-0 bg-[#f8fafc] rounded-md border-2 border-slate-300 overflow-hidden shadow-sm">
+                <img
+                    src={cardBgPath}
+                    alt=""
+                    className="w-full h-full object-fill"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+            </div>
 
-            {/* Overlay for depth effect (simple gradient) */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-black/5 pointer-events-none"></div>
+            {/* Content Layer (Sprite) */}
+            <div className="relative z-10 w-8 h-8 rounded overflow-hidden">
+                <div
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(${spritePath})`,
+                        backgroundSize: '400% 300%',
+                        backgroundPosition: `${xPos}% ${yPos}%`,
+                        backgroundRepeat: 'no-repeat'
+                    }}
+                />
+            </div>
+
+            {/* Overlay for inactive/depth effect */}
+            {!tile.isClickable && (
+                <div className="absolute inset-0 bg-black/40 rounded-md z-20 pointer-events-none"></div>
+            )}
         </div>
     );
 };

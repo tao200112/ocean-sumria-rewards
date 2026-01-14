@@ -1,32 +1,29 @@
 # Tile Match Game Assets Configuration
 
-To make the game look correct, please place your image files in the `public/game-assets/tiles/` directory.
+To make the game look correct and match the provided design, please place your image files in the `public/game-assets/` directory.
 
 ## Directory Structure
-Create the following folders in your project root:
-
 ```text
 public/
   └── game-assets/
-      └── tiles/
-          ├── sushi.png
-          ├── ramen.png
-          ├── tempura.png
-          ├── sake.png
-          ├── tea.png
-          ├── burger.png
-          ├── pizza.png
-          ├── donut.png
-          ├── fries.png
-          ├── hotdog.png
-          ├── taco.png
-          └── icecream.png
+      ├── tiles/               # The 12 item icons
+      │   ├── sushi.png
+      │   ├── ramen.png
+      │   └── ... (see previous list)
+      │
+      └── ui/                  # New UI Elements
+          ├── card-bg.png      # The white/blue rounded card background
+          ├── slot-bg.png      # The long beige bar with 7 slots
+          ├── btn-undo.png     # Yellow undo button icon
+          ├── btn-shuffle.png  # Blue shuffle button icon
+          ├── btn-hint.png     # Yellow bulb button icon
+          ├── btn-restart.png  # Red restart button icon
+          ├── bg-win.png       # Victory background/overlay
+          └── bg-loss.png      # Defeat background/overlay
 ```
 
 ## Image Specs
-- **Format**: PNG (transparent background recommended)
-- **Size**: ~128x128px or 256x256px (High DPI)
-- **Content**: Center the item. The game renders them in a 40x48px box.
-
-## Testing with Fallbacks
-If you don't add images immediately, the game will automatically fallback to Emoji icons (🍣, 🍜, etc.), so you can test the gameplay logic right away without assets.
+- **Tiles**: Transparent PNGs of the food items.
+- **Card BG**: The rounded square tile background.
+- **Slot BG**: The container for the 7 selected tiles.
+- **Buttons**: The circular button images.

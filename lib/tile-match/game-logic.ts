@@ -1,11 +1,18 @@
 import { Tile } from '../../types/tile-match';
 
-// Standard 12 tile types
+// Standard 12 tile types matching the sprite sheet (4x3 grid)
 export const TILE_TYPES = [
-    'sushi', 'ramen', 'tempura', 'sake', 'tea',
-    'burger', 'pizza', 'donut', 'fries', 'hotdog',
-    'taco', 'icecream'
+    'sushi', 'sashimi', 'chicken', 'tempura',
+    'ramen', 'dumplings', 'beer', 'cocktail',
+    'sake', 'soda', 'boba', 'coin'
 ];
+
+// Map for sprite sheet index
+export const TILE_SPRITE_INDEX: Record<string, number> = {
+    'sushi': 0, 'sashimi': 1, 'chicken': 2, 'tempura': 3,
+    'ramen': 4, 'dumplings': 5, 'beer': 6, 'cocktail': 7,
+    'sake': 8, 'soda': 9, 'boba': 10, 'coin': 11
+};
 
 // board dimensions (virtual 8x8 grid for simplified overlapping)
 const GRID_W = 8;
