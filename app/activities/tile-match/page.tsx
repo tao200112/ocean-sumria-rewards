@@ -187,6 +187,45 @@ export default function TileMatchPage() {
                             </div>
                         </div>
 
+                        {/* Game Rules */}
+                        <div className="bg-ocean-800/50 rounded-2xl p-5 border border-ocean-700/50">
+                            <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-gold-400">info</span>
+                                How to Play
+                            </h2>
+                            <div className="space-y-2.5 text-sm text-slate-300">
+                                <div className="flex gap-2">
+                                    <span className="text-gold-400 font-bold shrink-0">1.</span>
+                                    <p>Click on tiles to move them to the tray below (max 7 tiles)</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <span className="text-gold-400 font-bold shrink-0">2.</span>
+                                    <p>Match 3 identical tiles to clear them from the tray</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <span className="text-gold-400 font-bold shrink-0">3.</span>
+                                    <p>Clear all tiles before the tray fills up to win!</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <span className="text-gold-400 font-bold shrink-0">4.</span>
+                                    <p>Use tools wisely - each can only be used <span className="text-gold-400 font-bold">once per game</span></p>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-ocean-700/50">
+                                <h3 className="text-xs font-bold text-slate-400 mb-2">🎁 Rewards</h3>
+                                <ul className="space-y-1.5 text-xs text-slate-400">
+                                    <li className="flex items-center gap-2">
+                                        <span className="size-1.5 rounded-full bg-green-400"></span>
+                                        Each level can be completed <span className="text-gold-400 font-bold">once per day</span> for rewards
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <span className="size-1.5 rounded-full bg-blue-400"></span>
+                                        You have <span className="text-gold-400 font-bold">{config.dailyFreePlays} free plays</span> daily, extra plays cost {config.playCost} points
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         {/* Level Select */}
                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-slate-400">grid_view</span>
