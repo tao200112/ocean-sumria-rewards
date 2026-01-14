@@ -224,7 +224,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
 
                 {/* Tools */}
-                <div className="flex gap-6 w-full justify-center px-4">
+                <div className="flex w-[340px] justify-between px-2">
                     <ToolBtn
                         label="Undo"
                         onClick={handleUndo}
