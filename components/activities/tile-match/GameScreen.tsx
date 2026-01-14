@@ -84,12 +84,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 }
             }, 300);
         } else {
-            // Check Lose logic (only if not waiting for timeout)
+            // Check Lose logic
             if (slots.length >= 7) {
                 setStatus('lost');
                 onFinish('lost');
             } else if (tiles.every(t => t.isRemoved)) {
-                // This covers winning without a final match (rare but possible)
                 setStatus('won');
                 onFinish('won');
             } else {
@@ -223,16 +222,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
             {/* Slot Tray & Controls */}
             <div className="h-40 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2">
-                {/* Tray Background Image - Updated with proper scaling and blend mode */}
-                <div className="relative w-[340px] h-[60px] flex items-center justify-center mb-2">
-                    <img src="/game-assets/ui/ui-tray-gen.png" className="absolute inset-0 w-full h-full object-fill mix-blend-multiply pointer-events-none drop-shadow-lg" alt="tray"
+                {/* Tray Background Image */}
+                <div className="relative w-[340px] h-[70px] flex items-center justify-center mb-2 overflow-hidden rounded-xl bg-black/5">
+                    {/* object-cover ensures the wood texture fills the box, removing white padding */}
+                    <img src="/game-assets/ui/ui-tray-gen.png"
+                        className="absolute inset-0 w-full h-full object-cover mix-blend-multiply pointer-events-none opacity-90"
+                        alt="tray"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }} />
 
-                    {/* Fallback Tray Styles */}
-                    <div className="absolute inset-0 bg-black/20 rounded-xl border border-white/10 -z-10"></div>
-
-                    {/* Slots Layer - Align with generated image */}
-                    <div className="flex gap-[5px] relative z-10 pl-[8px]">
+                    {/* Slots Layer - Center Alignment */}
+                    <div className="flex gap-[4px] relative z-10 justify-center w-full items-center h-full pt-1">
                         {Array.from({ length: 7 }).map((_, i) => (
                             <div key={i} className="size-10 flex items-center justify-center relative">
                                 {slots[i] && (
@@ -272,7 +271,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                 </div>
             </div>
 
-            {/* Overlays (Win/Loss) - Ensure z-index is highest */}
+            {/* Overlays (Win/Loss) */}
             {status === 'won' && (
                 <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
                     <div className="relative z-10 text-center p-8 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl">
@@ -298,9 +297,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
     );
 };
 
-// Updated ToolBtn to use Sprite Sheet with Blend Mode
 const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onClick: () => void, disabled: boolean, spriteIndex: number }) => {
-    // Sprite calc: 5 items. Positions: 0, 25, 50, 75, 100%
     const xPos = spriteIndex * 25;
 
     return (
@@ -311,7 +308,7 @@ const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onC
         >
             <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative">
                 <div
-                    className="absolute inset-0 mix-blend-multiply" // Added blend mode to remove white bg
+                    className="absolute inset-0 mix-blend-multiply"
                     style={{
                         backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
                         backgroundSize: '500% 100%',
@@ -320,8 +317,7 @@ const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onC
                     }}
                 />
             </div>
-            {/* Label Shadow */}
-            <span className="text-[10px] font-black uppercase text-white tracking-wider drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+            <span className="text-[10px] font-black uppercase text-white tracking-wider drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] pb-1">
                 {label}
             </span>
         </button>
