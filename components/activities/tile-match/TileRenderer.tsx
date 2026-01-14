@@ -28,19 +28,18 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
     // Position Calculation
     const style = useMemo(() => {
         if (slotIndex !== undefined) {
-            // Slot layout: Centered at bottom
-            // Slot is 308px wide (44 * 7) roughly
-            // We position relative to slot container
+            // Slot layout: Static position to fit inside flex container
             return {
-                left: slotIndex * 44 + 4, // 4px padding
-                top: 4,
+                position: 'relative' as const,
                 zIndex: 100,
                 transform: 'none',
-                transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                // Center in the size-11 slot
+                margin: 'auto'
             };
         } else {
-            // Board layout
+            // Board layout (Absolute)
             return {
+                position: 'absolute' as const,
                 left: tile.x,
                 top: tile.y,
                 zIndex: tile.z,
@@ -75,7 +74,7 @@ export const TileRenderer: React.FC<TileRendererProps> = ({ tile, onClick, slotI
     return (
         <div
             onClick={() => tile.isClickable && onClick(tile)}
-            className={`absolute flex items-center justify-center select-none ${slotIndex !== undefined ? 'size-10' : 'size-10'}`}
+            className={`${slotIndex !== undefined ? 'relative' : 'absolute'} flex items-center justify-center select-none ${slotIndex !== undefined ? 'size-10' : 'size-10'}`}
             style={{
                 width: 40,
                 height: 48,

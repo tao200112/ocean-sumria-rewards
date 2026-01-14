@@ -35,7 +35,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
         // Remove from board visually (mark removed)
         const newTiles = tiles.map(t =>
             t.id === clickedTile.id
-                ? { ...t, isRemoved: true, inSlotIndex: -1 } // Logic removed, rendering handled by slots
+                ? { ...t, isRemoved: true, inSlotIndex: -1 }
                 : t
         );
 
@@ -75,7 +75,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
                 setSlots(newSlots);
 
-                // CRITICAL FIX: Check Win Condition immediately after clearing slots
+                // Check Win Condition
                 if (newSlots.length === 0 && tiles.every(t => t.isRemoved)) {
                     setStatus('won');
                     onFinish('won');
@@ -109,8 +109,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
         const lastAction = history[history.length - 1];
         if (lastAction.action === 'pick') {
             const newSlots = slots.slice(0, -1);
-
-            // Restore to board
             const newTiles = tiles.map(t =>
                 t.id === lastAction.tileId
                     ? { ...t, isRemoved: false, isClickable: true }
@@ -126,18 +124,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
     const handleShuffle = () => {
         if (toolCounts.shuffle >= LIMIT) return;
-
-        // Collect remaining board tiles
         const onBoard = tiles.filter(t => !t.isRemoved);
         const types = onBoard.map(t => t.type);
 
-        // Shuffle types
         for (let i = types.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [types[i], types[j]] = [types[j], types[i]];
         }
 
-        // Reassign types
         let typeIdx = 0;
         const newTiles = tiles.map(t => {
             if (!t.isRemoved) {
@@ -152,27 +146,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 
     const handleHint = () => {
         if (toolCounts.hint >= LIMIT) return;
-
-        // Simple hint
         const clickables = tiles.filter(t => t.isClickable);
-
         let match: Tile | undefined;
-
-        // Priority logic
         if (slots.length > 0) {
             const counts: Record<string, number> = {};
             slots.forEach(t => counts[t.type] = (counts[t.type] || 0) + 1);
             const twoType = Object.keys(counts).find(k => counts[k] === 2);
             if (twoType) match = clickables.find(t => t.type === twoType);
-
             if (!match) {
                 const oneType = Object.keys(counts).find(k => counts[k] === 1);
                 if (oneType) match = clickables.find(t => t.type === oneType);
             }
         }
-
         if (!match && clickables.length > 0) match = clickables[0];
-
         if (match) {
             setHintTileId(match.id);
             setTimeout(() => setHintTileId(null), 2000);
@@ -195,7 +181,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
             </div>
 
             {/* Header / Stats */}
-            <div className="h-12 flex items-center justify-between px-4 bg-ocean-800/40 backdrop-blur-md z-20 border-b border-white/10">
+            <div className="h-12 flex items-center justify-between px-4 bg-ocean-800/40 backdrop-blur-md z-20 border-b border-white/10 shrink-0">
                 <div className="px-3 py-1 bg-black/30 rounded-full border border-white/10">
                     <span className="text-white font-bold text-xs shadow-black drop-shadow-md">Level {level}</span>
                 </div>
@@ -221,19 +207,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
             </div>
 
             {/* Slot Tray & Controls */}
-            <div className="h-40 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2">
-                {/* Tray Background Image */}
-                <div className="relative w-[340px] h-[70px] flex items-center justify-center mb-2 overflow-hidden rounded-xl bg-black/5">
-                    {/* object-cover ensures the wood texture fills the box, removing white padding */}
-                    <img src="/game-assets/ui/ui-tray-gen.png"
-                        className="absolute inset-0 w-full h-full object-cover mix-blend-multiply pointer-events-none opacity-90"
-                        alt="tray"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <div className="h-44 bg-white/10 backdrop-blur-md border-t border-white/20 relative z-30 flex flex-col items-center justify-end pb-4 pt-2 shrink-0">
 
-                    {/* Slots Layer - Center Alignment */}
-                    <div className="flex gap-[4px] relative z-10 justify-center w-full items-center h-full pt-1">
+                {/* CSS Based Tray - Guarantees Alignment */}
+                <div className="relative w-[340px] h-16 flex items-center justify-center mb-3 bg-[#eecfa1] rounded-xl shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_-2px_4px_rgba(0,0,0,0.2)] border-b-4 border-[#dbb080]">
+                    {/* Inner Slots Layer */}
+                    <div className="flex gap-[4px] relative z-10 justify-center w-full items-center">
                         {Array.from({ length: 7 }).map((_, i) => (
-                            <div key={i} className="size-10 flex items-center justify-center relative">
+                            <div key={i} className="size-11 flex items-center justify-center relative bg-black/10 rounded-lg shadow-inner border border-black/5">
                                 {slots[i] && (
                                     <TileRenderer tile={slots[i]} onClick={() => { }} slotIndex={i} />
                                 )}
@@ -242,7 +223,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
                     </div>
                 </div>
 
-                {/* Tools - Using Sprite Sheet */}
+                {/* Tools */}
                 <div className="flex gap-6 w-full justify-center px-4">
                     <ToolBtn
                         label="Undo"
@@ -298,21 +279,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ initialState, runId, lev
 };
 
 const ToolBtn = ({ label, onClick, disabled, spriteIndex }: { label: string, onClick: () => void, disabled: boolean, spriteIndex: number }) => {
+    // Sprite calc: 5 items. 
     const xPos = spriteIndex * 25;
 
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`flex flex-col items-center gap-1 active:scale-95 transition-all ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}`}
+            className={`flex flex-col items-center gap-1 active:scale-95 transition-all shrink-0 ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}`}
         >
-            <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative">
+            <div className="size-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden bg-white/10 relative shrink-0">
                 <div
                     className="absolute inset-0 mix-blend-multiply"
                     style={{
                         backgroundImage: 'url(/game-assets/sprites/ui-buttons-gen.png)',
-                        backgroundSize: '500% 100%',
-                        backgroundPosition: `${xPos}% 0%`,
+                        backgroundSize: '500% auto', // Fix aspect ratio (Auto height)
+                        backgroundPosition: `${xPos}% center`,
                         backgroundRepeat: 'no-repeat'
                     }}
                 />
